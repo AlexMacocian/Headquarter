@@ -179,6 +179,7 @@ static int auth_login_finish(struct sts_connection *sts, struct ssl_sts_connecti
     array_reset(&content);
 
     if (ret != 0) {
+        array_reset(&request);
         return ret;
     }
 
@@ -303,6 +304,7 @@ static int auth2f_upgrade_totp(
     array_reset(&content);
 
     if (ret != 0) {
+        array_reset(&request);
         return ret;
     }
 
@@ -358,6 +360,7 @@ static int auth_list_game_accounts(struct sts_connection *sts, struct ssl_sts_co
     array_reset(&content);
 
     if (ret != 0) {
+        array_reset(&request);
         return ret;
     }
 
@@ -426,6 +429,7 @@ static int auth_request_game_token(struct sts_connection *sts, struct ssl_sts_co
     array_reset(&content);
 
     if (ret != 0) {
+        array_reset(&request);
         return ret;
     }
 
@@ -475,6 +479,32 @@ static int auth_request_game_token(struct sts_connection *sts, struct ssl_sts_co
     array_reset(&response);
     return 0;
 }
+
+#if 0
+static int sts_ping(struct sts_connection *sts, struct ssl_sts_connection *ssl)
+{
+    (void)sts;
+
+    const char url[] = "/Sts/Ping";
+    const size_t url_len = sizeof(url) - 1;
+
+    array_uint8_t request;
+    array_init(&request);
+
+    const uint8_t content[] = "";
+    int ret = sts_write_request(&request, url, url_len, content, 0);
+
+    if (ret != 0) {
+        array_reset(&request);
+        return ret;
+    }
+
+    ret = ssl_sts_connection_send(ssl, request.data, request.size);
+    array_reset(&request);
+
+    return ret;
+}
+#endif
 
 int portal_login(struct portal_login_result *result, const char *username, const char *password)
 {
