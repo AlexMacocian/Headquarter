@@ -116,6 +116,8 @@ int main(int argc, const char *argv[])
     time_init();
     init_timers();
 
+    log_set_level(LOG_INFO);
+
     if (options.verbose)
         log_set_level(LOG_DEBUG);
     if (options.trace)
