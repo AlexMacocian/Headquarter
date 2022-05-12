@@ -2,6 +2,9 @@
 #define COMMON_UUID_H
 
 #define UUID_DEFINED
+#ifdef uuid_t
+#undef uuid_t
+#endif
 typedef unsigned char uuid_t[16];
 
 #include <stdio.h>

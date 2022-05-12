@@ -267,7 +267,7 @@ static int read_user_code(int *otp)
         fprintf(stderr, "Couldn't extract the otp from '%s'\n", line);
         return 1;
     }
-
+    fprintf(stdout, "Code provided is %d\n", *otp);
     return 0;
 }
 
@@ -285,7 +285,7 @@ static int auth2f_upgrade_totp(
     array_reserve(&content, 1024);
 
     appendf(&content, "<Request>\n");
-    appendf(&content, "<Otp>%06d</Otp>\n", otp);
+    appendf(&content, "<Otp>%d</Otp>\n", otp);
     if (remember_me != 0)
         appendf(&content, "<WhitelistIp/>\n");
     appendf(&content, "</Request>\n");
