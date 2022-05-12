@@ -556,7 +556,8 @@ void HandleAgentUpdateDestination(Connection *conn, size_t psize, Packet *packet
     agent_set_distination(agent, pack->dest);
 }
 
-void HandleAgentDestroyPlayer(Connection* conn, size_t psize, Packet* packet) {
+void HandleAgentDestroyPlayer(Connection* conn, size_t psize, Packet* packet)
+{
 #pragma pack(push, 1)
     typedef struct {
         Header      header;
@@ -1091,8 +1092,9 @@ void HandleAgentPingeg(Connection *conn, size_t psize, Packet *packet)
     AgentPinged *pack = cast(AgentPinged *)packet;
     assert(client && client->game_srv.secured);
 
-    Event_AgentFocus params;
-    params.agent_id  = pack->agent_id;
-    params.player_id = pack->player_id;
-    broadcast_event(&client->event_mgr, EventType_AgentFocus, &params);
+    Event params;
+    Event_Init(&params, EventType_AgentFocus);
+    params.AgentFocus.agent_id  = pack->agent_id;
+    params.AgentFocus.player_id = pack->player_id;
+    broadcast_event(&client->event_mgr, &params);
 }

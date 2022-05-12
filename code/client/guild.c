@@ -16,12 +16,15 @@ Guild *get_guild_safe(GwClient *client, uint32_t guild_id)
     return guild;
 }
 
-void init_guildmember_update(GwClient* client) {
-    GuildMemberUpdate* gmu = &client->guild_member_update;
+void init_guildmember_update(GwClient *client)
+{
+    GuildMemberUpdate *gmu = &client->guild_member_update;
     kstr_init(&gmu->player_name, gmu->player_name_buffer, 0, ARRAY_SIZE(gmu->player_name_buffer));
     reset_guildmember_update(client);
 }
-void calc_last_login(GuildMember* member, uint32_t minutes_since_login) {
+
+void calc_last_login(GuildMember *member, uint32_t minutes_since_login)
+{
     uint64_t last_login_utc = get_time_since_epoch();
     if (minutes_since_login) {
         last_login_utc -= ((uint64_t)minutes_since_login * 60);
@@ -29,7 +32,8 @@ void calc_last_login(GuildMember* member, uint32_t minutes_since_login) {
     member->last_login_utc = last_login_utc;
 }
 
-GuildMember* complete_guildmember_update(GwClient* client, uint16_t* account_name, size_t capacity) {
+GuildMember *complete_guildmember_update(GwClient *client, uint16_t *account_name, size_t capacity)
+{
     GuildMemberUpdate* gmu = &client->guild_member_update;
     GuildMember* member = NULL;
     //if (!gmu->pending)
@@ -70,7 +74,8 @@ leave:
     return member;
 }
 
-void reset_guildmember_update(GwClient* client) {
+void reset_guildmember_update(GwClient *client)
+{
     GuildMemberUpdate* gmu = &client->guild_member_update;
     gmu->pending = false;
     gmu->member_type = 0;
@@ -137,7 +142,8 @@ void HandleGuildPlayerRole(Connection *conn, size_t psize, Packet *packet)
     }
 }
 
-void HandleGuildChangePlayerStatus(Connection* conn, size_t psize, Packet* packet) {
+void HandleGuildChangePlayerStatus(Connection* conn, size_t psize, Packet* packet)
+{
 #pragma pack(push, 1)
     typedef struct {
         Header header;
@@ -150,7 +156,7 @@ void HandleGuildChangePlayerStatus(Connection* conn, size_t psize, Packet* packe
     // NOTE: Followed by GAME_SMSG_GUILD_PLAYER_CHANGE_SUBJECT
     assert(sizeof(GuildPlayerStatusChange) == psize);
 
-    GwClient* client = cast(GwClient*)conn->data;
+    GwClient *client = cast(GwClient*)conn->data;
     GuildPlayerStatusChange* pack = cast(GuildPlayerStatusChange*)packet;
     assert(client&& client->game_srv.secured);
     //reset_guildmember_update(&client);
@@ -171,7 +177,7 @@ void HandleGuildChangePlayerType(Connection* conn, size_t psize, Packet* packet)
     // NOTE: Followed by GAME_SMSG_GUILD_PLAYER_CHANGE_SUBJECT
     assert(sizeof(GuildPlayerTypeChange) == psize);
 
-    GwClient* client = cast(GwClient*)conn->data;
+    GwClient *client = cast(GwClient*)conn->data;
     GuildPlayerTypeChange* pack = cast(GuildPlayerTypeChange*)packet;
     assert(client&& client->game_srv.secured);
     //reset_guildmember_update(&client);
@@ -179,7 +185,8 @@ void HandleGuildChangePlayerType(Connection* conn, size_t psize, Packet* packet)
     client->guild_member_update.pending = true;
 }
 
-void HandleGuildChangePlayerContext(Connection* conn, size_t psize, Packet* packet) {
+void HandleGuildChangePlayerContext(Connection* conn, size_t psize, Packet* packet)
+{
 #pragma pack(push, 1)
     typedef struct {
         Header header;
@@ -198,7 +205,8 @@ void HandleGuildChangePlayerContext(Connection* conn, size_t psize, Packet* pack
     // Not used atm
 }
 
-void HandleGuildPlayerChangeComplete(Connection* conn, size_t psize, Packet* packet) {
+void HandleGuildPlayerChangeComplete(Connection* conn, size_t psize, Packet* packet)
+{
 #pragma pack(push, 1)
     typedef struct {
         Header header;
@@ -210,15 +218,16 @@ void HandleGuildPlayerChangeComplete(Connection* conn, size_t psize, Packet* pac
     // Follows GAME_SMSG_GUILD_PLAYER_CHANGE_CONTEXT or GAME_SMSG_GUILD_PLAYER_CHANGE_STATUS
     assert(sizeof(GuildPlayerStatusChange) == psize);
 
-    GwClient* client = cast(GwClient*)conn->data;
+    GwClient *client = cast(GwClient*)conn->data;
     GuildPlayerStatusChange* pack = cast(GuildPlayerStatusChange*)packet;
     assert(client&& client->game_srv.secured);
 
     GuildMember* member = complete_guildmember_update(client, pack->account_name, ARRAY_SIZE(pack->account_name));
-    if (member && !list_empty(&client->event_mgr.callbacks[EventType_GuildMember_Updated])) {
-        Event_GuildMemberUpdated event;
-        api_make_guild_member(&event.member, member);
-        broadcast_event(&client->event_mgr, EventType_GuildMember_Updated, &event);
+    if (member && !list_empty(&client->event_mgr.callbacks[EventType_GuildMemberUpdated])) {
+        Event event;
+        Event_Init(&event, EventType_GuildMemberUpdated);
+        api_make_guild_member(&event.GuildMemberUpdated.member, member);
+        broadcast_event(&client->event_mgr, &event);
     }
 }
 
@@ -242,7 +251,7 @@ void HandleGuildPlayerInfo(Connection* conn, size_t psize, Packet* packet)
     assert(packet->header == GAME_SMSG_GUILD_PLAYER_INFO);
     assert(sizeof(GuildPlayerInfo) == psize);
 
-    GwClient* client = cast(GwClient*)conn->data;
+    GwClient *client = cast(GwClient*)conn->data;
     GuildPlayerInfo* pack = cast(GuildPlayerInfo*)packet;
 
     //wchar_t invited_name[40]
@@ -274,10 +283,11 @@ void HandleGuildPlayerInfo(Connection* conn, size_t psize, Packet* packet)
     //found->last_login_date = 0;
     //LogInfo("Guild member added: %ls (%ls), unk %d, type %d, status %d", 
     //    found->account_name_buffer, found->player_name_buffer, pack->unk, found->member_type, found->status);
-    if (!list_empty(&client->event_mgr.callbacks[EventType_GuildMember_Updated])) {
-        Event_GuildMemberUpdated event;
-        api_make_guild_member(&event.member, found);
-        broadcast_event(&client->event_mgr, EventType_GuildMember_Updated, &event);
+    if (!list_empty(&client->event_mgr.callbacks[EventType_GuildMemberUpdated])) {
+        Event event;
+        Event_Init(&event, EventType_GuildMemberUpdated);
+        api_make_guild_member(&event.GuildMemberUpdated.member, found);
+        broadcast_event(&client->event_mgr, &event);
     }
 }
 

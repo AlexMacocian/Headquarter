@@ -3,36 +3,44 @@
 #endif
 #define CORE_FRIEND_C
 
-Friend* get_friend(uint8_t* uuid, uint16_t* name) {
-    Friend* gwfriend;
+Friend *get_friend(const uint8_t *uuid, const uint16_t *name)
+{
+    Friend *friend;
     if (uuid) {
-        array_foreach(gwfriend, &client->friends) {
-            if (memcmp(uuid, gwfriend->uuid, 16) == 0)
-                return gwfriend;
+        array_foreach(friend, &client->friends) {
+            if (memcmp(uuid, friend->uuid, 16) == 0)
+                return friend;
         }
     }
     if (name) {
-        struct kstr name_kstr;
         size_t length = 0;
-        for (length = 0; length < 20 && name[length]; length++) {};
-        kstr_init(&name_kstr, name, length, 20);
-        array_foreach(gwfriend, &client->friends) {
-            if (kstr_compare(&gwfriend->name, &name_kstr) == 0 || kstr_compare(&gwfriend->account, &name_kstr) == 0)
-                return gwfriend;
+        for (length = 0; length < 20 && name[length]; length++) {}
+
+        const struct kstr name_kstr = {
+            .length = length,
+            .capacity = length,
+            .buffer = (uint16_t *)name,
+        };
+
+        array_foreach(friend, &client->friends) {
+            if (kstr_compare(&friend->name, &name_kstr) == 0 || kstr_compare(&friend->account, &name_kstr) == 0)
+                return friend;
         }
     }
     return NULL;
 }
-Friend* get_or_create_friend(uint8_t* uuid, uint16_t* name) {
-    Friend* gwfriend = get_friend(uuid, name);
-    if (gwfriend)
-        return gwfriend;
-    gwfriend = array_push(&client->friends, 1);
-    if (!gwfriend) {
+
+Friend *get_or_create_friend(uint8_t *uuid, uint16_t *name)
+{
+    Friend *friend = get_friend(uuid, name);
+    if (friend)
+        return friend;
+    friend = array_push(&client->friends, 1);
+    if (!friend) {
         return NULL;
     }
-    init_friend(gwfriend);
-    return gwfriend;
+    init_friend(friend);
+    return friend;
 }
 
 void HandleFriendUpdateInfo(Connection *conn, size_t psize, Packet *packet)
@@ -54,23 +62,23 @@ void HandleFriendUpdateInfo(Connection *conn, size_t psize, Packet *packet)
     UpdateInfo *pack = cast(UpdateInfo *)packet;
     assert(client);
 
-    Friend* gwfriend = get_or_create_friend(pack->uuid, pack->account);
-    assert(gwfriend);
-    kstr_read(&gwfriend->account, pack->account, ARRAY_SIZE(pack->account));
-    uuid_dec_le(pack->uuid, gwfriend->uuid);
+    Friend *friend = get_or_create_friend(pack->uuid, pack->account);
+    assert(friend);
+    kstr_read(&friend->account, pack->account, ARRAY_SIZE(pack->account));
+    uuid_dec_le(pack->uuid, friend->uuid);
 
-    gwfriend->type = pack->type;
-    if (gwfriend->status < 1) {
+    friend->type = pack->type;
+    if (friend->status < 1) {
         // Offline, reset.
-        gwfriend->status = 0;
-        gwfriend->name.length = 0;
-        gwfriend->name.buffer[0] = 0;
-        gwfriend->zone = 0;
+        friend->status = 0;
+        friend->name.length = 0;
+        friend->name.buffer[0] = 0;
+        friend->zone = 0;
     }
 
     //Event_FriendStatus event;
-    //api_make_friend(&event.gwfriend, gwfriend);
-    //broadcast_event(&client->event_mgr, EventType_Friend_Updated, &event);
+    //api_make_friend(&event.friend, friend);
+    //broadcast_event(&client->event_mgr, EventType_FriendStatus, &event);
     //LogInfo("Friend info updated: %ls (%ls), status %d, type %d, map %d", friend->name_buffer, friend->account_buffer, friend->status, friend->type, friend->zone);
 }
 
@@ -93,27 +101,27 @@ void HandleFriendUpdateStatus(Connection *conn, size_t psize, Packet *packet)
     UpdateStatus *pack = cast(UpdateStatus *)packet;
     assert(client);
     assert(pack->status >= 0 && pack->status <= 3);
-    Friend* gwfriend = get_or_create_friend(pack->uuid, NULL);
-    assert(gwfriend);
-    gwfriend->status = pack->status;
-    if (gwfriend->status < 1) {
+    Friend *friend = get_or_create_friend(pack->uuid, NULL);
+    assert(friend);
+    friend->status = pack->status;
+    if (friend->status < 1) {
         // Offline, reset.
-        gwfriend->status = 0;
-        gwfriend->name.length = 0;
-        gwfriend->name.buffer[0] = 0;
-        gwfriend->zone = 0;
-    }
-    else {
+        friend->status = 0;
+        friend->name.length = 0;
+        friend->name.buffer[0] = 0;
+        friend->zone = 0;
+    } else {
         // Online, read in player name
-        kstr_read(&gwfriend->name, pack->played, ARRAY_SIZE(pack->played));
+        kstr_read(&friend->name, pack->played, ARRAY_SIZE(pack->played));
     }
 
-    if (!list_empty(&client->event_mgr.callbacks[EventType_Friend_Updated])) {
-        Event_FriendStatus event;
-        api_make_friend(&event.gwfriend, gwfriend);
-        broadcast_event(&client->event_mgr, EventType_Friend_Updated, &event);
+    if (!list_empty(&client->event_mgr.callbacks[EventType_FriendStatus])) {
+        Event event;
+        Event_Init(&event, EventType_FriendStatus);
+
+        api_make_friend(&event.FriendStatus.friend, friend);
+        broadcast_event(&client->event_mgr, &event);
     }
-    //LogInfo("Friend status updated: %ls (%ls), status %d, type %d, map %d", friend->name_buffer, friend->account_buffer, friend->status, friend->type, friend->zone);
 }
 
 void HandleFriendUpdateLocation(Connection *conn, size_t psize, Packet *packet)
@@ -133,17 +141,18 @@ void HandleFriendUpdateLocation(Connection *conn, size_t psize, Packet *packet)
     GwClient *client = cast(GwClient *)conn->data;
     UpdateLocation *pack = cast(UpdateLocation *)packet;
     assert(client);
-    Friend* gwfriend = get_or_create_friend(NULL, pack->account);
-    if (!gwfriend) {
+    Friend *friend = get_or_create_friend(NULL, pack->account);
+    if (!friend) {
         LogError("Couldn't create or find a new friend (3)");
         return;
     }
 
-    gwfriend->zone = pack->map_id;
-    if (!list_empty(&client->event_mgr.callbacks[EventType_Friend_Updated])) {
-        Event_FriendStatus event;
-        api_make_friend(&event.gwfriend, gwfriend);
-        broadcast_event(&client->event_mgr, EventType_Friend_Updated, &event);
+    friend->zone = pack->map_id;
+    if (!list_empty(&client->event_mgr.callbacks[EventType_FriendStatus])) {
+        Event event;
+        Event_Init(&event, EventType_FriendStatus);
+        api_make_friend(&event.FriendStatus.friend, friend);
+        broadcast_event(&client->event_mgr, &event);
     }
     //LogInfo("Friend location updated: %ls (%ls), status %d, type %d, map %d", friend->name_buffer, friend->account_buffer, friend->status, friend->type, friend->zone);
 }
