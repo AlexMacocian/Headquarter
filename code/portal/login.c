@@ -97,14 +97,12 @@ static int find_between(struct str *dest, struct str *src, const char *left, con
 
     size_t left_pos = s_find(src, &l);
     if (left_pos == (size_t)-1) {
-        fprintf(stderr, "Failed to find '%s'\n", left);
         return 1;
     }
 
     struct str rem = s_substr(src, (left_pos + l.len), SIZE_MAX);
     size_t right_pos = s_find(&rem, &r);
     if (right_pos == (size_t)-1) {
-        fprintf(stderr, "Failed to find '%s'\n", right);
         return 1;
     }
 
@@ -255,28 +253,29 @@ static int auth_login_finish(struct sts_connection *sts, struct ssl_sts_connecti
     return 0;
 }
 
-static int read_user_code(int *otp)
+static int read_user_code(char *buffer, size_t size, size_t *ret)
 {
     printf("Enter code: ");
 
-    char line[256];
-    if (fgets(line, sizeof(line), stdin) == NULL)
+    if (fgets(buffer, size, stdin) == NULL)
         return 1;
 
-    if (sscanf(line, "%d", otp) != 1) {
-        fprintf(stderr, "Couldn't extract the otp from '%s'\n", line);
+    // The complete line didn't fit in the buffer.
+    const char *newline;
+    if ((newline = strchr(buffer, '\n')) == NULL)
         return 1;
-    }
-    fprintf(stdout, "Code provided is %d\n", *otp);
+(ret);
     return 0;
 }
 
 static int auth2f_upgrade_totp(
     struct sts_connection *sts,
     struct ssl_sts_connection *ssl,
-    int otp,
+    const char *otp,
+    size_t otp_len,
     int remember_me)
 {
+    (otp_len);
     const char url[] = "/Auth2f/Upgrade";
     const size_t url_len = sizeof(url) - 1;
 
@@ -285,7 +284,7 @@ static int auth2f_upgrade_totp(
     array_reserve(&content, 1024);
 
     appendf(&content, "<Request>\n");
-    appendf(&content, "<Otp>%d</Otp>\n", otp);
+    appendf(&content, "<Otp>%06d</Otp>\n", otp);
     if (remember_me != 0)
         appendf(&content, "<WhitelistIp/>\n");
     appendf(&content, "</Request>\n");
@@ -327,6 +326,21 @@ static int auth2f_upgrade_totp(
 
     if (reply.status_code != 200) {
         fprintf(stderr, "Reply to '%s' failed with status %u\n", url, reply.status_code);
+        array_reset(&response);
+        return 1;
+    }
+
+    struct str reply_content = s_from_unsigned_utf8(reply.content, reply.content_length);
+
+    struct str user_id;
+    if (find_between(&user_id, &reply_content, "<UserId>", "</UserId>") != 0) {
+        fprintf(stderr, "Failed to find UserId\n");
+        array_reset(&response);
+        return 1;
+    }
+
+    if (!s_parse_uuid(&user_id, &sts->user_id)) {
+        fprintf(stderr, "Failed to parse the user_id uuid '%.*s'\n", (int)user_id.len, user_id.ptr);
         array_reset(&response);
         return 1;
     }
@@ -566,13 +580,14 @@ int portal_login(struct portal_login_result *result, const char *username, const
             goto cleanup;
         }
 
-        int otp;
-        if ((ret = read_user_code(&otp)) != 0) {
+        char otp[32];
+        size_t otp_len;
+        if ((ret = read_user_code(otp, sizeof(otp), &otp_len)) != 0) {
             goto cleanup;
         }
 
         const int remember_me = 1;
-        if ((ret = auth2f_upgrade_totp(&sts, &ssl, otp, remember_me)) != 0) {
+        if ((ret = auth2f_upgrade_totp(&sts, &ssl, otp, otp_len, remember_me)) != 0) {
             goto cleanup;
         }
     }
@@ -591,7 +606,7 @@ int portal_login(struct portal_login_result *result, const char *username, const
 cleanup:
     // TODO: This connection seems to need to stay open even after successful auth.
     // Its naughty, but for now leave the pointer hanging instead of closing the conn.
-    //ssl_sts_connection_free(&ssl);
+    // ssl_sts_connection_free(&ssl);
     sts_connection_free(&sts);
     mbedtls_entropy_free(&entropy);
     if (ret != 0)
