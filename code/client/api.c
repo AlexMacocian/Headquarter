@@ -55,15 +55,18 @@ HQAPI void FreePluginAndExitThread(PluginObject *plugin, int retval)
 {
     assert(client != NULL);
     thread_mutex_lock(&client->mutex);
-    Plugin *it;
-    plugin_foreach(it) {
-        if (it->module == plugin->module) {
-            plugin_unload(it);
-            break;
+    if (plugin) {
+        Plugin* it;
+        plugin_foreach(it) {
+            if (it->module == plugin->module) {
+                plugin_unload(it);
+                break;
+            }
         }
     }
     thread_mutex_unlock(&client->mutex);
     thread_exit(retval);
+    
 }
 
 HQAPI size_t GetPlugins(ApiPlugin *buffer, size_t length)
@@ -361,6 +364,14 @@ HQAPI size_t GetCharacterName(char *buffer, size_t length)
         written = length;
     }
 leave:
+    thread_mutex_unlock(&client->mutex);
+    return written;
+}
+HQAPI int GetAccountUuid(char* buffer, size_t length)
+{
+    assert(client != NULL);
+    thread_mutex_lock(&client->mutex);
+    int written = uuid_snprint(buffer, length, &client->uuid);
     thread_mutex_unlock(&client->mutex);
     return written;
 }
