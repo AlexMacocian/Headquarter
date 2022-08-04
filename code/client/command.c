@@ -25,9 +25,6 @@ void print_help(bool terminate)
             "    -seed                      Specify the seed for pseudo random generation\n"
             "    -v, --verbose              Enable debug logs\n"
             "    -vv, --trace               Enable trace logs\n\n"
-
-            "    -mapid                     Specify the map id you want to start in\n"
-            "    -maptype                   Specify the map type you want to start in\n\n"
         );
 
     if (terminate) exit(0);
@@ -48,7 +45,6 @@ void parse_command_args(int argc, const char **argv)
     // to returns with an error flag set.
 
     options.mapid = 248; // By default with load GtoB first.
-    options.maptype = 3;   
     options.newauth = true;
 
     for (int i = 0; i < argc; i++) {
@@ -82,11 +78,6 @@ void parse_command_args(int argc, const char **argv)
             safe_strcpy(options.charname, ARRAY_SIZE(options.charname), argv[++i]);
         } else if (!strcmp(arg, "-oldauth")) {
             options.newauth = false;
-        } else if (!strcmp(arg, "-mapid")) {
-            check_for_more_arguments(argc, argv, i, 1);
-            options.mapid = atoi(argv[++i]);
-        } else if (!strcmp(arg, "-maptype")) {
-            options.maptype = atoi(argv[++i]);
         } else if (!strcmp(arg, "-l")) {
             check_for_more_arguments(argc, argv, i, 1);
             safe_strcpy(options.log_file_name, ARRAY_SIZE(options.log_file_name), argv[++i]);

@@ -245,8 +245,9 @@ void ContinuePlayCharacter(GwClient *client, uint32_t error_code)
     uint32_t trans_id = issue_next_transaction(client, AsyncType_PlayCharacter);
     LogDebug("AuthSrv_RequestInstance: {trans_id: %lu}", trans_id);
     client->state = AwaitGameServerInfo;
+    // GW Doesn't pass district/language etc when connecting to character.
     AuthSrv_RequestInstance(&client->auth_srv, trans_id,
-        options.mapid, options.maptype, DistrictRegion_America, 0, DistrictLanguage_Default);
+        client->current_character->map, 0, 0, 0, 0);
 }
 
 void PlayCharacter(GwClient *client, struct kstr *name, PlayerStatus status)
