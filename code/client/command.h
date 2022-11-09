@@ -24,6 +24,15 @@ typedef struct CommandOptions {
     int         service_option; // windows => {'r', 'i', 'u'} or linux => {'r', 's'}
 
     int32_t     seed;
+
+    struct {
+        bool set;
+        int  map_id;
+    } opt_map_id;
+    struct {
+        bool set;
+        int  map_type;
+    } opt_map_type;
 } CommandOptions;
 
 extern CommandOptions options;
