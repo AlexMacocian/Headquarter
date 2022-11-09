@@ -84,14 +84,15 @@ bool kstr_read_ascii(struct kstr *str, const char *src, size_t size)
 {
     str->length = 0;
     size_t length = strnlen(src, size);
-    if (str->capacity < length)
+    if (str->capacity < length + 1)
         return false;
-    for (size_t i = 0; i < length; i++) {
+    for (size_t i = 0; i < length && src[i]; i++) {
         if (src[i] & 0x80)
             return false;
         str->buffer[i] = src[i];
+        str->length++;
     }
-    str->length = length;
+    str->buffer[str->length++] = 0;
     return true;
 }
 
