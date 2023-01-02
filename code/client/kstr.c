@@ -58,7 +58,7 @@ struct kstr kstr_substr(const struct kstr *str, size_t pos, size_t length)
     return (struct kstr){ .length = length, .capacity = capacity, .buffer = str->buffer + pos };
 }
 
-bool kstr_read(struct kstr *str, uint16_t *src, size_t size)
+bool kstr_read(struct kstr *str, const uint16_t *src, size_t size)
 {
     struct kstr source;
     kstr_init(&source, (uint16_t *)src, size, size);
@@ -84,15 +84,14 @@ bool kstr_read_ascii(struct kstr *str, const char *src, size_t size)
 {
     str->length = 0;
     size_t length = strnlen(src, size);
-    if (str->capacity < length + 1)
+    if (str->capacity < length)
         return false;
-    for (size_t i = 0; i < length && src[i]; i++) {
+    for (size_t i = 0; i < length; i++) {
         if (src[i] & 0x80)
             return false;
         str->buffer[i] = src[i];
-        str->length++;
     }
-    str->buffer[str->length++] = 0;
+    str->length = length;
     return true;
 }
 
