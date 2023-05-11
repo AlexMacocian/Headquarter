@@ -322,6 +322,7 @@ bool ChangeCharacter(GwClient* client, struct kstr* name) {
     if (!(name && kstr_compare(&cc->name, name) != 0))
         return false;
     array_foreach(cc, &client->characters) {
+        LogDebug("Character %.*ls (length of %d), comparing to command line character %.*ls (length of %d)",cc->name.length, cc->name.buffer, cc->name.length, name->length, name->buffer, name->length);
         if (kstr_compare(&cc->name, name) == 0) {
             client->state = AwaitChangeCharacter;
             client->pending_character = cc;

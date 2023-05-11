@@ -68,15 +68,19 @@ void HandleGameServerInfo(Connection *conn, size_t psize, Packet *packet)
         uint32_t player_id;
     } GameServerInfo;
 #pragma pack(pop)
-
+    
     assert(packet->header == AUTH_SMSG_GAME_SERVER_INFO);
     assert(sizeof(GameServerInfo) == psize);
+
+    
 
     GwClient *client = cast(GwClient *)conn->data;
     GameServerInfo *pack = cast(GameServerInfo *)packet;
     assert(client);
 
     assert(client->state == AwaitGameServerInfo);
+
+    LogDebug("HandleGameServerInfo { world_id %d, map_id %d, player_id %d }", pack->world_id, pack->map_id, pack->player_id);
 
     struct sockaddr host;
     memcpy(&host, pack->host, sizeof(host));

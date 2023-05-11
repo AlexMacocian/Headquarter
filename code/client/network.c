@@ -491,7 +491,11 @@ bool GameSrv_Connect(Connection *conn,
         return false;
     }
 
-    result = connect(conn->fd.handle, cast(struct sockaddr *)&conn->host, sizeof(conn->host));
+    // 3 retries
+    result = SOCKET_ERROR;
+    for (int i = 0; i < 5 && result == SOCKET_ERROR; i++) {
+        result = connect(conn->fd.handle, cast(struct sockaddr *)&conn->host, sizeof(conn->host));
+    }
     if (result == SOCKET_ERROR) {
         LogError("'connect' failed. (%d)", os_errno);
         NetConn_Reset(conn);
