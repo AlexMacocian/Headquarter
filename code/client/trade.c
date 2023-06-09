@@ -13,7 +13,7 @@ void HandleTradeRequest(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_TRADE_REQUEST);
-    assert(sizeof(TradeRequest) == psize);
+    assert(sizeof(TradeRequest) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     TradeRequest *pack = cast(TradeRequest *)packet;
@@ -35,7 +35,7 @@ void HandleTradeTerminate(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_TRADE_TERMINATE);
-    assert(sizeof(TradeTerminate) == psize);
+    assert(sizeof(TradeTerminate) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     TradeTerminate *pack = cast(TradeTerminate *)packet;
@@ -57,7 +57,7 @@ void HandleTradeOfferedCount(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_TRADE_OFFERED_COUNT);
-    assert(sizeof(OfferedCount) == psize);
+    assert(sizeof(OfferedCount) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     OfferedCount *pack = cast(OfferedCount *)packet;
@@ -75,7 +75,7 @@ void HandleTradeReceiveOffer(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_TRADE_RECEIVE_OFFER);
-    assert(sizeof(TradeOffer) == psize);
+    assert(sizeof(TradeOffer) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     TradeOffer *pack = cast(TradeOffer *)packet;
@@ -98,7 +98,7 @@ void HandleTradeAddItem(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
     
     assert(packet->header == GAME_SMSG_TRADE_ADD_ITEM);
-    assert(sizeof(TradeItemInfo) == psize);
+    assert(sizeof(TradeItemInfo) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     TradeItemInfo*pack = cast(TradeItemInfo*)packet;
@@ -123,7 +123,7 @@ void HandleTradeAcknowledge(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
     
     assert(packet->header == GAME_SMSG_TRADE_ACKNOWLEDGE);
-    assert(sizeof(TradeAcknowledge) == psize);
+    assert(sizeof(TradeAcknowledge) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     TradeAcknowledge *pack = cast(TradeAcknowledge *)packet;
@@ -164,7 +164,7 @@ void HandleTradeChangeOffer(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_TRADE_CHANGE_OFFER);
-    assert(sizeof(TradeChangeOffer) == psize);
+    assert(sizeof(TradeChangeOffer) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     TradeChangeOffer *pack = cast(TradeChangeOffer *)packet;

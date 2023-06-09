@@ -121,7 +121,7 @@ void HandleGuildPlayerRole(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_GUILD_PLAYER_ROLE);
-    assert(sizeof(PlayerRole) == psize);
+    assert(sizeof(PlayerRole) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     PlayerRole *pack = cast(PlayerRole *)packet;
@@ -154,7 +154,7 @@ void HandleGuildChangePlayerStatus(Connection* conn, size_t psize, Packet* packe
 
     assert(packet->header == GAME_SMSG_GUILD_CHANGE_PLAYER_STATUS);
     // NOTE: Followed by GAME_SMSG_GUILD_PLAYER_CHANGE_SUBJECT
-    assert(sizeof(GuildPlayerStatusChange) == psize);
+    assert(sizeof(GuildPlayerStatusChange) <= psize);
 
     GwClient *client = cast(GwClient*)conn->data;
     GuildPlayerStatusChange* pack = cast(GuildPlayerStatusChange*)packet;
@@ -175,7 +175,7 @@ void HandleGuildChangePlayerType(Connection* conn, size_t psize, Packet* packet)
 
     assert(packet->header == GAME_SMSG_GUILD_CHANGE_PLAYER_TYPE);
     // NOTE: Followed by GAME_SMSG_GUILD_PLAYER_CHANGE_SUBJECT
-    assert(sizeof(GuildPlayerTypeChange) == psize);
+    assert(sizeof(GuildPlayerTypeChange) <= psize);
 
     GwClient *client = cast(GwClient*)conn->data;
     GuildPlayerTypeChange* pack = cast(GuildPlayerTypeChange*)packet;
@@ -196,7 +196,7 @@ void HandleGuildChangePlayerContext(Connection* conn, size_t psize, Packet* pack
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_GUILD_CHANGE_PLAYER_CONTEXT);
-    assert(sizeof(GuildPlayerStatusChange) == psize);
+    assert(sizeof(GuildPlayerStatusChange) <= psize);
 
     (void)conn;
     (void)packet;
@@ -216,7 +216,7 @@ void HandleGuildPlayerChangeComplete(Connection* conn, size_t psize, Packet* pac
 
     assert(packet->header == GAME_SMSG_GUILD_PLAYER_CHANGE_COMPLETE);
     // Follows GAME_SMSG_GUILD_PLAYER_CHANGE_CONTEXT or GAME_SMSG_GUILD_PLAYER_CHANGE_STATUS
-    assert(sizeof(GuildPlayerStatusChange) == psize);
+    assert(sizeof(GuildPlayerStatusChange) <= psize);
 
     GwClient *client = cast(GwClient*)conn->data;
     GuildPlayerStatusChange* pack = cast(GuildPlayerStatusChange*)packet;
@@ -249,7 +249,7 @@ void HandleGuildPlayerInfo(Connection* conn, size_t psize, Packet* packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_GUILD_PLAYER_INFO);
-    assert(sizeof(GuildPlayerInfo) == psize);
+    assert(sizeof(GuildPlayerInfo) <= psize);
 
     GwClient *client = cast(GwClient*)conn->data;
     GuildPlayerInfo* pack = cast(GuildPlayerInfo*)packet;
@@ -319,7 +319,7 @@ void HandleGuildGeneralInfo(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_GUILD_GENERAL_INFO);
-    assert(sizeof(GuildInfo) == psize);
+    assert(sizeof(GuildInfo) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     GuildInfo *pack = cast(GuildInfo *)packet;
@@ -362,7 +362,7 @@ void HandleGuildChangeFaction(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_GUILD_CHANGE_FACTION);
-    assert(sizeof(Payload) == psize);
+    assert(sizeof(Payload) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     Payload *pack = cast(Payload *)packet;
@@ -400,7 +400,7 @@ void HandleGuildInviteReceived(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_GUILD_INVITE_RECEIVED);
-    assert(sizeof(GuildInvite) == psize);
+    assert(sizeof(GuildInvite) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     assert(client && client->game_srv.secured);

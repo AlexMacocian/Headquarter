@@ -24,7 +24,7 @@ void HandleQuestDescription(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_QUEST_DESCRIPTION);
-    assert(sizeof(QuestDescription) == psize);
+    assert(sizeof(QuestDescription) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     QuestDescription *pack = cast(QuestDescription *)packet;
@@ -55,7 +55,7 @@ void HandleQuestAdd(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_QUEST_ADD);
-    assert(sizeof(QuestAdd) == psize);
+    assert(sizeof(QuestAdd) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     QuestAdd *pack = cast(QuestAdd *)packet;
@@ -85,7 +85,7 @@ void HandleQuestUpdateMarker(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_QUEST_UPDATE_MARKER);
-    assert(sizeof(QuestMarker) == psize);
+    assert(sizeof(QuestMarker) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     QuestMarker *pack = cast(QuestMarker *)packet;
@@ -106,7 +106,7 @@ void HandleQuestRemove(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
     
     assert(packet->header == GAME_SMSG_QUEST_REMOVE);
-    assert(sizeof(QuestRemove) == psize);
+    assert(sizeof(QuestRemove) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     QuestRemove *pack = cast(QuestRemove *)packet;

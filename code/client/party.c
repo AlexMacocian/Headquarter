@@ -578,7 +578,7 @@ void HandlePartySearchRequestJoin(Connection *conn, size_t psize, Packet *packet
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_PARTY_SEARCH_REQUEST_JOIN);
-    assert(sizeof(RequestJoin) == psize);
+    assert(sizeof(RequestJoin) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     assert(client && client->game_srv.secured);
@@ -595,7 +595,7 @@ void HandlePartySearchRequestDone(Connection *conn, size_t psize, Packet *packet
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_PARTY_SEARCH_REQUEST_DONE);
-    assert(sizeof(RequestDone) == psize);
+    assert(sizeof(RequestDone) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     assert(client && client->game_srv.secured);
@@ -623,7 +623,7 @@ void HandlePartySearchAdvertisement(Connection *conn, size_t psize, Packet *pack
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_PARTY_SEARCH_ADVERTISEMENT);
-    assert(sizeof(PacketType) == psize);
+    assert(sizeof(PacketType) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     PacketType *pack = cast(PacketType *)packet;
@@ -654,7 +654,7 @@ void HandlePartySearchSeek(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_PARTY_SEARCH_SEEK);
-    assert(sizeof(SeekParty) == psize);
+    assert(sizeof(SeekParty) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     assert(client && client->game_srv.secured);
@@ -670,7 +670,7 @@ void HandlePartySearchRemove(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_PARTY_SEARCH_REMOVE);
-    assert(sizeof(PacketType) == psize);
+    assert(sizeof(PacketType) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     assert(client && client->game_srv.secured);
@@ -688,7 +688,7 @@ void HandlePartySearchSize(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_PARTY_SEARCH_SIZE);
-    assert(sizeof(PacketType) == psize);
+    assert(sizeof(PacketType) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     assert(client && client->game_srv.secured);
@@ -706,7 +706,7 @@ void HandlePartySearchType(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_PARTY_SEARCH_TYPE);
-    assert(sizeof(PacketType) == psize);
+    assert(sizeof(PacketType) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     assert(client && client->game_srv.secured);

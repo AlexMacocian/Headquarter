@@ -15,7 +15,7 @@ void HandleAccountSettings(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == AUTH_SMSG_ACCOUNT_SETTINGS);
-    assert(sizeof(AccountSettings) == psize);
+    assert(sizeof(AccountSettings) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     AccountSettings *pack = cast(AccountSettings *)packet;
@@ -34,7 +34,7 @@ void HandleErrorMessage(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == AUTH_SMSG_ERROR_MESSAGE);
-    assert(sizeof(ErrorMessage) == psize);
+    assert(sizeof(ErrorMessage) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     ErrorMessage *pack = cast(ErrorMessage *)packet;
@@ -91,7 +91,7 @@ void HandleServerReponse(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == AUTH_SMSG_SERVER_RESPONSE);
-    assert(sizeof(ServerReponse) == psize);
+    assert(sizeof(ServerReponse) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     ServerReponse *pack = cast(ServerReponse *)packet;
@@ -112,7 +112,7 @@ void HandleSessionInfo(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == AUTH_SMSG_SESSION_INFO);
-    assert(sizeof(SessionInfo) == psize);
+    assert(sizeof(SessionInfo) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     SessionInfo *pack = cast(SessionInfo *)packet;
@@ -143,7 +143,7 @@ void HandleAccountInfo(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == AUTH_SMSG_ACCOUNT_INFO);
-    assert(sizeof(AccountInfo) == psize);
+    assert(sizeof(AccountInfo) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     AccountInfo *pack = cast(AccountInfo *)packet;
@@ -177,12 +177,21 @@ void HandleCharacterInfo(Connection *conn, size_t psize, Packet *packet)
         uint32_t n_extended;
         uint16_t unk1;
         uint16_t last_map_id;
-        uint16_t extended[30];
+        uint16_t extended[32];
     } CharacterInfo;
 #pragma pack(pop)
 
+    /*
+    	{TYPE_MSG_HEADER, 7},
+	{TYPE_DWORD, 0},
+	{TYPE_BLOB, 16},
+	{TYPE_DWORD, 0},
+	{TYPE_STRING_16, 20},
+	{TYPE_ARRAY_8, 64},
+    */
+
     assert(packet->header == AUTH_SMSG_CHARACTER_INFO);
-    assert(sizeof(CharacterInfo) == psize);
+    assert(sizeof(CharacterInfo) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     CharacterInfo *pack = cast(CharacterInfo *)packet;
@@ -225,6 +234,8 @@ void AuthSrv_AskServerResponse(Connection *conn, uint32_t trans_id)
 
     AskServerResponse packet = NewPacket(AUTH_CMSG_ASK_SERVER_RESPONSE);
     packet.trans_id = trans_id;
+
+    LogDebug("AuthSrv_AskServerResponse, trans_id %d", trans_id);
     SendPacket(conn, sizeof(packet), &packet);
 }
 
@@ -235,8 +246,27 @@ void AuthSrv_ComputerInfo(Connection *conn)
         Header header;
         uint16_t username[32];
         uint16_t pcname[32];
+        uint8_t pad[8];
     } ComputerInfo;
 #pragma pack(pop)
+
+    ComputerInfo info = NewPacket(AUTH_CMSG_SEND_COMPUTER_INFO);
+
+    DECLARE_KSTR(pcname, 32);
+    DECLARE_KSTR(username, 32);
+
+    char* pc_name_const = "WindowsUser2393-PC";//"Wyatt-PC";
+    char* user_name_const = "WindowsUser2393";
+
+    kstr_read_ascii(&pcname, pc_name_const, strlen(pc_name_const));
+    kstr_read_ascii(&username, user_name_const, strlen(user_name_const));
+
+    kstr_write(&pcname, info.pcname, ARRAY_SIZE(info.pcname));
+    kstr_write(&username, info.username, ARRAY_SIZE(info.username));
+
+    memset(&info.pad, 0, 8);
+
+    SendPacket(conn, sizeof(info), &info);
 
 #pragma pack(push, 1)
     typedef struct {
@@ -246,30 +276,18 @@ void AuthSrv_ComputerInfo(Connection *conn)
     } ComputerHash;
 #pragma pack(pop)
 
-    ComputerInfo info = NewPacket(AUTH_CMSG_SEND_COMPUTER_INFO);
-
-    DECLARE_KSTR(pcname, 32);
-    DECLARE_KSTR(username, 32);
-
-    kstr_read_ascii(&pcname, "Wyatt-PC", 8);
-    kstr_read_ascii(&username, "Wyatt", 5);
-
-    kstr_write(&pcname, info.pcname, ARRAY_SIZE(info.pcname));
-    kstr_write(&username, info.username, ARRAY_SIZE(info.username));
-
     ComputerHash hash = NewPacket(AUTH_CMSG_SEND_COMPUTER_HASH);
     hash.version = GUILD_WARS_VERSION;
-    memcpy(hash.hash, "\x19\x0D\xB0\x37\xE6\x05\x13\x6B\x86\x18\x66\x28\x45\x7E\xDD\xB5", 16);
+    memcpy(hash.hash, "\x19\x0D\xB0\x37\xE6\x05\x13\x6B\x86\x18\x66\x28\x45\x7E\xDD\xB6", 16);
 
-    SendPacket(conn, sizeof(info), &info);
     SendPacket(conn, sizeof(hash), &hash);
 }
 
 void AuthSrv_HardwareInfo(Connection *conn)
 {
     // @Remark: Holy fuck c++ is retarded. Why the fuck it force you to add a null-terminated ?
-    uint8_t hash[/* 16 */] = "\x9B\x99\x78\x8D\x2F\x01\xFA\x4F\x99\x82\xD3\xB8\xBD\x83\xCD\xF6";
-    uint8_t info[/* 92 */] = "\x03\x00\x5C\x00\x04\x00\xDE\x03\x46\x0D\xC3\x06\x47\x65\x6E\x75\x69\x6E\x65\x49\x6E\x74\x65\x6C\x06\x02\x00\x00\x04\x00\x00\x00\xC0\x11\x00\x00\x60\x11\x00\x00\xDE\x10\x00\x00\xC6\x07\x20\x90\x55\x6E\x6B\x6E\x6F\x77\x6E\x20\x44\x65\x76\x69\x63\x65\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x55\x6E\x6B\x6E\x6F\x77\x6E\x20\x56\x65\x6E\x64\x6F\x72\x00\x00\x00\x00\x00\x00";
+    uint8_t hash[/* 16 */] = "\x9B\x99\x78\x8D\x2F\x01\xFA\x4F\x99\x82\xD3\xB8\xBD\x83\xCD\xF7";
+    uint8_t info[/* 92 */] = "\x03\x00\x5C\x00\x04\x00\xDE\x03\x47\x0D\xC3\x06\x47\x65\x6E\x75\x69\x6E\x65\x49\x6E\x74\x65\x6C\x06\x02\x00\x00\x04\x00\x00\x00\xC0\x11\x00\x00\x60\x11\x00\x00\xDE\x10\x00\x00\xC6\x07\x20\x90\x55\x6E\x6B\x6E\x6F\x77\x6E\x20\x44\x65\x76\x69\x63\x65\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x55\x6E\x6B\x6E\x6F\x77\x6E\x20\x56\x65\x6E\x64\x6F\x72\x00\x00\x00\x00\x00\x00";
 
 #pragma pack(push, 1)
     typedef struct {
@@ -285,6 +303,7 @@ void AuthSrv_HardwareInfo(Connection *conn)
     memcpy(packet.info, info, 92);
     memcpy(packet.hash, hash, 16);
 
+    LogDebug("AuthSrv_HardwareInfo");
     SendPacket(conn, sizeof(packet), &packet);
 }
 

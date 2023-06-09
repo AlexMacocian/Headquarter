@@ -35,7 +35,7 @@ void HandleEffectUpkeepAdded(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_EFFECT_UPKEEP_ADDED);
-    assert(sizeof(EffectAdded) == psize);
+    assert(sizeof(EffectAdded) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     assert(client && client->game_srv.secured);
@@ -52,7 +52,7 @@ void HandleEffectUpkeepRemoved(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_EFFECT_UPKEEP_REMOVED);
-    assert(sizeof(EffectRemoved) == psize);
+    assert(sizeof(EffectRemoved) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     assert(client && client->game_srv.secured);
@@ -72,7 +72,7 @@ void HandleEffectUpkeepApplied(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_EFFECT_UPKEEP_APPLIED);
-    assert(sizeof(EffectApplied) == psize);
+    assert(sizeof(EffectApplied) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     assert(client && client->game_srv.secured);
@@ -92,7 +92,7 @@ void HandleEffectApplied(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_EFFECT_APPLIED);
-    assert(sizeof(EffectApplied) == psize);
+    assert(sizeof(EffectApplied) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     EffectApplied *pack = cast(EffectApplied *)packet;
@@ -124,7 +124,7 @@ void HandleEffectRenewed(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_EFFECT_RENEWED);
-    assert(sizeof(EffectRenewed) == psize);
+    assert(sizeof(EffectRenewed) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     EffectRenewed *pack = cast(EffectRenewed *)packet;
@@ -150,7 +150,7 @@ void HandleEffectRemoved(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_EFFECT_REMOVED);
-    assert(sizeof(EffectRemoved) == psize);
+    assert(sizeof(EffectRemoved) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     EffectRemoved *pack = cast(EffectRemoved *)packet;

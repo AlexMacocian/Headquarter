@@ -58,7 +58,7 @@ void HandleFriendUpdateInfo(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == AUTH_SMSG_FRIEND_UPDATE_INFO);
-    assert(sizeof(UpdateInfo) == psize);
+    assert(sizeof(UpdateInfo) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     UpdateInfo *pack = cast(UpdateInfo *)packet;
@@ -100,7 +100,7 @@ void HandleFriendUpdateStatus(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
     
     assert(packet->header == AUTH_SMSG_FRIEND_UPDATE_STATUS);
-    assert(sizeof(UpdateStatus) == psize);
+    assert(sizeof(UpdateStatus) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     UpdateStatus *pack = cast(UpdateStatus *)packet;
@@ -142,7 +142,7 @@ void HandleFriendUpdateLocation(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
     
     assert(packet->header == AUTH_SMSG_FRIEND_UPDATE_LOCATION);
-    assert(sizeof(UpdateLocation) == psize);
+    assert(sizeof(UpdateLocation) <= psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     UpdateLocation *pack = cast(UpdateLocation *)packet;
@@ -174,7 +174,7 @@ void HandleFriendStreamEnd(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == AUTH_SMSG_FRIEND_STREAM_END);
-    assert(sizeof(FriendStreamEnd) == psize);
+    assert(sizeof(FriendStreamEnd) <= psize);
 
     (void)conn;
 }
