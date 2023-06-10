@@ -251,8 +251,8 @@ def main(argv):
     ls_clt_codecs, _, ls_clt_codecs_count = proc.read(ls_codecs + 28, 'III')
     ls_srv_codecs, _, ls_srv_codecs_count = proc.read(ls_codecs + 44, 'III')
 
-    addr_ls_clt = range(ls_clt_codecs, ls_clt_codecs + (8  * ls_clt_codecs_count), 8)  # AUTH_CLIENT
-    addr_ls_srv = range(ls_srv_codecs, ls_srv_codecs + (12 * ls_srv_codecs_count), 12) # AUTH_SERVER
+    # addr_ls_clt = range(ls_clt_codecs, ls_clt_codecs + (8  * ls_clt_codecs_count), 8)  # AUTH_CLIENT
+    # addr_ls_srv = range(ls_srv_codecs, ls_srv_codecs + (12 * ls_srv_codecs_count), 12) # AUTH_SERVER
     addr_gs_clt = range(gs_clt_codecs, gs_clt_codecs + (8  * gs_clt_codecs_count), 8)  # GAME_CLIENT
     addr_gs_srv = range(gs_srv_codecs, gs_srv_codecs + (12 * gs_srv_codecs_count), 12) # GAME_SERVER
 
@@ -261,7 +261,7 @@ def main(argv):
     desc_gs_clt = []
     desc_gs_srv = []
 
-
+    """
     for id, addr in enumerate(addr_ls_clt):
         fields_addr, count, handler = proc.read(addr, 'III')
 
@@ -288,7 +288,7 @@ def main(argv):
 
         desc_ls_srv.append(desc)
 
-
+    """
     for id, addr in enumerate(addr_gs_clt):
         fields_addr, count, handler = proc.read(addr, 'III')
 
@@ -326,11 +326,11 @@ def main(argv):
             print('\t{%-3d, %-3d, %s_%04d, %-3d, 0},' % (header, count, prefix, header, desc.size))
         print('};\n')
     
-    for desc in desc_ls_clt:
-        desc.print('AUTH_CLIENT')
+    # for desc in desc_ls_clt:
+    #     desc.print('AUTH_CLIENT')
 
-    for desc in desc_ls_srv:
-        desc.print('AUTH_SERVER')
+    # for desc in desc_ls_srv:
+    #     desc.print('AUTH_SERVER')
 
     for desc in desc_gs_clt:
         desc.print('GAME_CLIENT')
@@ -338,8 +338,8 @@ def main(argv):
     for desc in desc_gs_srv:
         desc.print('GAME_SERVER')
 
-    create_desc_array(desc_ls_clt, 'AUTH_CLIENT')
-    create_desc_array(desc_ls_srv, 'AUTH_SERVER')
+    # create_desc_array(desc_ls_clt, 'AUTH_CLIENT')
+    # create_desc_array(desc_ls_srv, 'AUTH_SERVER')
     create_desc_array(desc_gs_clt, 'GAME_CLIENT')
     create_desc_array(desc_gs_srv, 'GAME_SERVER')
 

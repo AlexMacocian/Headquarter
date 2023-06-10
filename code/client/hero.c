@@ -117,7 +117,7 @@ void HandleHeroBehavior(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_HERO_BEHAVIOR);
-    assert(sizeof(HeroBehavior) <= psize);
+    assert(sizeof(HeroBehavior) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     assert(client && client->game_srv.secured);

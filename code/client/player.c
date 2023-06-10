@@ -45,7 +45,7 @@ void HandlePlayerAttrSet(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_PLAYER_ATTR_SET);
-    assert(sizeof(PlayerAttr) <= psize);
+    assert(sizeof(PlayerAttr) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     PlayerAttr *pack = cast(PlayerAttr *)packet;
@@ -79,7 +79,7 @@ void HandlePlayerAttrMaxKurzick(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_PLAYER_ATTR_MAX_KURZICK);
-    assert(sizeof(MaxFaction) <= psize);
+    assert(sizeof(MaxFaction) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     MaxFaction *pack = cast(MaxFaction *)packet;
@@ -98,7 +98,7 @@ void HandlePlayerAttrMaxLuxon(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_PLAYER_ATTR_MAX_LUXON);
-    assert(sizeof(MaxFaction) <= psize);
+    assert(sizeof(MaxFaction) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     MaxFaction *pack = cast(MaxFaction *)packet;
@@ -117,7 +117,7 @@ void HandlePlayerAttrMaxBalthazar(Connection *conn, size_t psize, Packet *packet
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_PLAYER_ATTR_MAX_BALTHAZAR);
-    assert(sizeof(MaxFaction) <= psize);
+    assert(sizeof(MaxFaction) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     MaxFaction *pack = cast(MaxFaction *)packet;
@@ -136,7 +136,7 @@ void HandlePlayerAttrMaxImperial(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
     
     assert(packet->header == GAME_SMSG_PLAYER_ATTR_MAX_IMPERIAL);
-    assert(sizeof(MaxFaction) <= psize);
+    assert(sizeof(MaxFaction) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     MaxFaction *pack = cast(MaxFaction *)packet;
@@ -156,7 +156,7 @@ void HandlePlayerAttrUpdate(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_PLAYER_ATTR_UPDATE);
-    assert(sizeof(UpdateAttr) <= psize);
+    assert(sizeof(UpdateAttr) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     UpdateAttr *pack = cast(UpdateAttr *)packet;

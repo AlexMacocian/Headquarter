@@ -70,7 +70,7 @@ void HandleGameServerInfo(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
     
     assert(packet->header == AUTH_SMSG_GAME_SERVER_INFO);
-    assert(sizeof(GameServerInfo) <= psize);
+    assert(sizeof(GameServerInfo) == psize);
 
     
 
@@ -102,7 +102,7 @@ void HandleGameTransferInfo(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_TRANSFER_GAME_SERVER_INFO);
-    assert(sizeof(ServerInfo) <= psize);
+    assert(sizeof(ServerInfo) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     ServerInfo *pack = cast(ServerInfo *)packet;
@@ -121,7 +121,7 @@ void HandleGameTransferInfo(Connection *conn, size_t psize, Packet *packet)
 void HandleInstanceCountdownStop(Connection *conn, size_t psize, Packet *packet)
 {
     assert(packet->header == GAME_SMSG_INSTANCE_COUNTDOWN_STOP);
-    assert(sizeof(Packet) <= psize);
+    assert(sizeof(Packet) == psize);
     
     GwClient *client = cast(GwClient *)conn->data;
     assert(client && client->game_srv.secured);
@@ -143,7 +143,7 @@ void HandleInstanceCountdown(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_INSTANCE_COUNTDOWN);
-    assert(sizeof(Countdown) <= psize);
+    assert(sizeof(Countdown) == psize);
     
     GwClient *client = cast(GwClient *)conn->data;
     Countdown *pack = cast(Countdown *)packet;
@@ -293,7 +293,7 @@ void HandleInstanceTravelTimer(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_INSTANCE_TRAVEL_TIMER);
-    assert(sizeof(PartyTravel) <= psize);
+    assert(sizeof(PartyTravel) == psize);
     
     GwClient *client = cast(GwClient *)conn->data;
     assert(client && client->game_srv.secured);
@@ -309,7 +309,7 @@ void HandleInstanceLoaded(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_INSTANCE_LOADED);
-    assert(sizeof(InstanceLoaded) <= psize);
+    assert(sizeof(InstanceLoaded) == psize);
     
     GwClient *client = cast(GwClient *)conn->data;
     assert(client && client->game_srv.secured);
@@ -320,7 +320,7 @@ void HandleInstanceLoaded(Connection *conn, size_t psize, Packet *packet)
 void HandleInstanceLoadFinish(Connection *conn, size_t psize, Packet *packet)
 {
     assert(packet->header == GAME_SMSG_INSTANCE_LOAD_FINISH);
-    assert(sizeof(Packet) <= psize);
+    assert(sizeof(Packet) == psize);
     
     GwClient *client = cast(GwClient *)conn->data;
     assert(client && client->game_srv.secured);

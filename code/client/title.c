@@ -16,7 +16,7 @@ void HandleTitleRankData(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_TITLE_RANK_DATA);
-    assert(sizeof(RankData) <= psize);
+    assert(sizeof(RankData) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     RankData *pack = cast(RankData *)packet;
@@ -35,7 +35,7 @@ void HandleTitleRankDisplay(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_TITLE_RANK_DISPLAY);
-    assert(sizeof(RankDisplay) <= psize);
+    assert(sizeof(RankDisplay) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     RankDisplay *pack = cast(RankDisplay *)packet;
@@ -63,7 +63,7 @@ void HandleTitleTrackInfo(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_TITLE_TRACK_INFO);
-    assert(sizeof(TrackInfo) <= psize);
+    assert(sizeof(TrackInfo) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     assert(client && client->game_srv.secured);

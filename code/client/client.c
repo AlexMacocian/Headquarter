@@ -196,7 +196,7 @@ void PortalAccountConnect(GwClient *client, struct uuid *user_id, struct uuid *t
         uint8_t  user_id[16];
         uint8_t  session_id[16];
         uint16_t charname1[20]; // playing character
-        //uint16_t charname2[20]; // secret question
+        uint16_t charname2[20]; // secret question
     } PortalAccountLogin;
 #pragma pack(pop)
 
@@ -217,7 +217,7 @@ void PortalAccountConnect(GwClient *client, struct uuid *user_id, struct uuid *t
     uuid_enc_le(packet.user_id, user_id);
     uuid_enc_le(packet.session_id, token);
     
-    //assert(ARRAY_SIZE(packet.charname1) == ARRAY_SIZE(packet.charname2));
+    assert(ARRAY_SIZE(packet.charname1) == ARRAY_SIZE(packet.charname2));
     if (ARRAY_SIZE(packet.charname1) < charname->length) {
         LogError("Charname is too long. Length: %zu, Max: %zu", charname->length, ARRAY_SIZE(packet.charname1));
         return;

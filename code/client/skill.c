@@ -42,7 +42,7 @@ void HandleSkillbarUpdateSkill(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_SKILLBAR_UPDATE_SKILL);
-    assert(sizeof(UpdateSkill) <= psize);
+    assert(sizeof(UpdateSkill) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     UpdateSkill *pack = cast(UpdateSkill *)packet;
@@ -71,7 +71,7 @@ void HandleSkillbarUpdate(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_SKILLBAR_UPDATE);
-    assert(sizeof(SkillbarUpdate) <= psize);
+    assert(sizeof(SkillbarUpdate) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     SkillbarUpdate *pack = cast(SkillbarUpdate *)packet;
@@ -97,7 +97,7 @@ void HandleSkillAddToWindowsData(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_SKILL_ADD_TO_WINDOWS_DATA);
-    assert(sizeof(WindowsData) <= psize);
+    assert(sizeof(WindowsData) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     WindowsData *pack = cast(WindowsData *)packet;
@@ -114,7 +114,7 @@ void HandleSkillAddToWindowsEnd(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_SKILL_ADD_TO_WINDOWS_END);
-    assert(sizeof(WindowsEnd) <= psize);
+    assert(sizeof(WindowsEnd) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     WindowsEnd *pack = cast(WindowsEnd *)packet;
@@ -134,7 +134,7 @@ void HandleSkillActivated(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_SKILL_ACTIVATED);
-    assert(sizeof(SkillCancel) <= psize);
+    assert(sizeof(SkillCancel) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     SkillCancel *pack = cast(SkillCancel *)packet;
@@ -161,7 +161,7 @@ void HandleSkillActivate(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_SKILL_ACTIVATE);
-    assert(sizeof(SkillActivate) <= psize);
+    assert(sizeof(SkillActivate) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     SkillActivate *pack = cast(SkillActivate *)packet;
@@ -195,7 +195,7 @@ void HandleSkillRecharge(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_SKILL_RECHARGE);
-    assert(sizeof(SkillRecharge) <= psize);
+    assert(sizeof(SkillRecharge) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     SkillRecharge *pack = cast(SkillRecharge *)packet;
@@ -228,7 +228,7 @@ void HandleSkillRecharged(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
     
     assert(packet->header == GAME_SMSG_SKILL_RECHARGED);
-    assert(sizeof(SkillRecharged) <= psize);
+    assert(sizeof(SkillRecharged) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     SkillRecharged *pack = cast(SkillRecharged *)packet;
@@ -409,7 +409,7 @@ void HandleHeroSkillStatus(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_HERO_SKILL_STATUS);
-    assert(sizeof(SkillStatus) <= psize);
+    assert(sizeof(SkillStatus) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     SkillStatus *pack = cast(SkillStatus *)packet;
@@ -440,7 +440,7 @@ void HandleHeroSkillStatusBitmap(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_HERO_SKILL_STATUS_BITMAP);
-    assert(sizeof(SkillStatus) <= psize);
+    assert(sizeof(SkillStatus) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     SkillStatus *pack = cast(SkillStatus *)packet;
@@ -472,7 +472,7 @@ void HandleTomeShowSkills(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_TOME_SHOW_SKILLS);
-    assert(sizeof(TomeShowSkills) <= psize);
+    assert(sizeof(TomeShowSkills) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     TomeShowSkills *pack = cast(TomeShowSkills *)packet;
@@ -492,7 +492,7 @@ void HandleAgentUpdateAttribute(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_AGENT_UPDATE_ATTRIBUTE);
-    assert(sizeof(UpdateAttribute) <= psize);
+    assert(sizeof(UpdateAttribute) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     UpdateAttribute *pack = cast(UpdateAttribute *)packet;

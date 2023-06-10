@@ -6,7 +6,7 @@
 static void HandlePingRequest(Connection *conn, size_t psize, Packet *packet)
 {
     assert(packet->header == GAME_SMSG_PING_REQUEST);
-    assert(sizeof(Header) <= psize);
+    assert(sizeof(Header) == psize);
     GameSrv_PingReply(conn);
 }
 
@@ -20,7 +20,7 @@ static void HandlePingReply(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_PING_REPLY);
-    assert(sizeof(PingReply) <= psize);
+    assert(sizeof(PingReply) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     PingReply *pack = cast(PingReply *)packet;
@@ -48,7 +48,7 @@ static void HandleAccountCurrency(Connection *conn, size_t psize, Packet *packet
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_ACCOUNT_CURRENCY);
-    assert(sizeof(AccountCurrency) <= psize);
+    assert(sizeof(AccountCurrency) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     AccountCurrency *pack = cast(AccountCurrency *)packet;
@@ -67,7 +67,7 @@ static void HandleUpdateActiveWeaponSet(Connection *conn, size_t psize, Packet *
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_ITEM_SET_ACTIVE_WEAPON_SET);
-    assert(sizeof(UpdateActiveWeapon) <= psize);
+    assert(sizeof(UpdateActiveWeapon) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     UpdateActiveWeapon *pack = cast(UpdateActiveWeapon *)packet;
@@ -87,7 +87,7 @@ static void HandleGoldCharacterAdd(Connection *conn, size_t psize, Packet *packe
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_GOLD_CHARACTER_ADD);
-    assert(sizeof(AddGold) <= psize);
+    assert(sizeof(AddGold) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     AddGold *pack = cast(AddGold *)packet;
@@ -107,7 +107,7 @@ static void HandleGoldStorageAdd(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_GOLD_STORAGE_ADD);
-    assert(sizeof(UpdateGold) <= psize);
+    assert(sizeof(UpdateGold) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     UpdateGold *pack = cast(UpdateGold *)packet;
@@ -139,7 +139,7 @@ void HandleGoldCharacterRemove(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_GOLD_CHARACTER_REMOVE);
-    assert(sizeof(RemoveGold) <= psize);
+    assert(sizeof(RemoveGold) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     RemoveGold *pack = cast(RemoveGold *)packet;
@@ -159,7 +159,7 @@ static void HandleGoldStorageRemove(Connection *conn, size_t psize, Packet *pack
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_GOLD_STORAGE_REMOVE);
-    assert(sizeof(RemoveGold) <= psize);
+    assert(sizeof(RemoveGold) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     RemoveGold *pack = cast(RemoveGold *)packet;
@@ -200,7 +200,7 @@ void HandleInstanceLoadSpawnPoint(Connection *conn, size_t psize, Packet *packet
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_INSTANCE_LOAD_SPAWN_POINT);
-    assert(sizeof(SpawnPoint) <= psize);
+    assert(sizeof(SpawnPoint) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     SpawnPoint *pack = cast(SpawnPoint *)packet;
@@ -235,7 +235,7 @@ void HandleInstanceLoadInfo(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_INSTANCE_LOAD_INFO);
-    assert(sizeof(InstanceInfo) <= psize);
+    assert(sizeof(InstanceInfo) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     InstanceInfo *pack = cast(InstanceInfo *)packet;
@@ -263,7 +263,7 @@ void HandleInstanceLoadHead(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_INSTANCE_LOAD_HEAD);
-    assert(sizeof(InstanceHead) <= psize);
+    assert(sizeof(InstanceHead) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     assert(client && client->game_srv.secured);
@@ -279,7 +279,7 @@ void HandleInstanceLoadPlayerName(Connection *conn, size_t psize, Packet *packet
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_INSTANCE_LOAD_PLAYER_NAME);
-    assert(sizeof(InstancePlayerName) <= psize);
+    assert(sizeof(InstancePlayerName) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     InstancePlayerName *pack = cast(InstancePlayerName *)packet;
@@ -290,7 +290,7 @@ void HandleInstanceLoadPlayerName(Connection *conn, size_t psize, Packet *packet
 void HandleCinematicSkipEveryone(Connection *conn, size_t psize, Packet *packet)
 {
     assert(packet->header == GAME_SMSG_CINEMATIC_SKIP_EVERYONE);
-    assert(sizeof(Packet) <= psize);
+    assert(sizeof(Packet) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     assert(client && client->game_srv.secured);
@@ -310,7 +310,7 @@ void HandleCinematicSkipCount(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_CINEMATIC_SKIP_COUNT);
-    assert(sizeof(SkipCount) <= psize);
+    assert(sizeof(SkipCount) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     SkipCount *pack = cast(SkipCount *)packet;
@@ -330,7 +330,7 @@ void HandleCinematicStart(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_CINEMATIC_START);
-    assert(sizeof(CinematicStart) <= psize);
+    assert(sizeof(CinematicStart) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     CinematicStart *pack = cast(CinematicStart *)packet;
@@ -347,7 +347,7 @@ void HandleCinematicStart(Connection *conn, size_t psize, Packet *packet)
 void HandleCinematicDataEnd(Connection *conn, size_t psize, Packet *packet)
 {
     assert(packet->header == GAME_SMSG_CINEMATIC_DATA_END);
-    assert(sizeof(Packet) <= psize);
+    assert(sizeof(Packet) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     assert(client && client->game_srv.secured);
@@ -364,7 +364,7 @@ void HandleCinematicData(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_CINEMATIC_DATA);
-    assert(sizeof(CinematicData) <= psize);
+    assert(sizeof(CinematicData) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     assert(client && client->game_srv.secured);
@@ -373,7 +373,7 @@ void HandleCinematicData(Connection *conn, size_t psize, Packet *packet)
 void HandleCinematicEnd(Connection *conn, size_t psize, Packet *packet)
 {
     assert(packet->header == GAME_SMSG_CINEMATIC_END);
-    assert(sizeof(Packet) <= psize);
+    assert(sizeof(Packet) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     assert(client && client->game_srv.secured);
@@ -384,7 +384,7 @@ void HandleCinematicEnd(Connection *conn, size_t psize, Packet *packet)
 void HandleInstanceShowWin(Connection *conn, size_t psize, Packet *packet)
 {
     assert(packet->header == GAME_SMSG_INSTANCE_SHOW_WIN);
-    assert(sizeof(Packet) <= psize);
+    assert(sizeof(Packet) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     assert(client && client->game_srv.secured);
@@ -401,7 +401,7 @@ void HandleMissionAddGoal(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_MISSION_INFOBOX_ADD);
-    assert(sizeof(Payload) <= psize);
+    assert(sizeof(Payload) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     assert(client && client->game_srv.secured);
@@ -421,7 +421,7 @@ void HandleFriendListMessage(Connection* conn, size_t psize, Packet* packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_FRIENDLIST_MESSAGE);
-    assert(sizeof(ErrorMessage) <= psize);
+    assert(sizeof(ErrorMessage) == psize);
 
     GwClient* client = cast(GwClient*)conn->data;
     ErrorMessage* pack = cast(ErrorMessage*)packet;
@@ -474,7 +474,7 @@ void HandleMissionAddObjective(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_MISSION_OBJECTIVE_ADD);
-    assert(sizeof(Payload) <= psize);
+    assert(sizeof(Payload) == psize);
 
     (void)conn;
 }
@@ -690,7 +690,7 @@ void HandleCantEnterOutpost(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_INSTANCE_CANT_ENTER);
-    assert(sizeof(Payload) <= psize);
+    assert(sizeof(Payload) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     Payload *pack = cast(Payload *)packet;
