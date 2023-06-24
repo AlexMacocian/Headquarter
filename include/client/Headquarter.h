@@ -97,6 +97,7 @@ HQAPI bool              GetInCinematic(void);
 HQAPI void              SkipCinematic(void);
 
 HQAPI size_t            GetCharacterName(char *buffer, size_t length);
+HQAPI int               GetAccountUuid(char* buffer, size_t length);
 
 HQAPI size_t            GetPlayers(ApiPlayer *buffer, size_t length);
 HQAPI size_t            GetPlayerName(uint32_t player_id, uint16_t *buffer, size_t length);
