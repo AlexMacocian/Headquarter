@@ -1,7 +1,7 @@
 #ifndef HEADQUARTER_H
 #define HEADQUARTER_H
 
-#define GUILD_WARS_VERSION          (37250)
+#define GUILD_WARS_VERSION          (37259)
 #define HEADQUARTER_VERSION_MAJOR   (1)
 #define HEADQUARTER_VERSION_MINOR   (0)
 
@@ -97,7 +97,6 @@ HQAPI bool              GetInCinematic(void);
 HQAPI void              SkipCinematic(void);
 
 HQAPI size_t            GetCharacterName(char *buffer, size_t length);
-HQAPI int               GetAccountUuid(char* buffer, size_t length);
 
 HQAPI size_t            GetPlayers(ApiPlayer *buffer, size_t length);
 HQAPI size_t            GetPlayerName(uint32_t player_id, uint16_t *buffer, size_t length);
