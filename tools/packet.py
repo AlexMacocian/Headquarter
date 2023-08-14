@@ -171,7 +171,7 @@ class Descriptor(object):
                 handler = self.handler - image_base
             else:
                 handler = 0
-            print('// Handler Rva: %08X' % handler)
+            print('// Handler Rva: %08X [%08X]' % (handler, self.handler))
         print('MsgField %s_%04d[%d] = {' % (prefix, self.header, field_count))
 
         s = '    ' + seperator.join(str_fields) + ','
