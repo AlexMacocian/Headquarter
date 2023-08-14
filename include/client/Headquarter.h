@@ -1,7 +1,7 @@
 #ifndef HEADQUARTER_H
 #define HEADQUARTER_H
 
-#define GUILD_WARS_VERSION          (37259)
+#define GUILD_WARS_VERSION          (37276)
 #define HEADQUARTER_VERSION_MAJOR   (1)
 #define HEADQUARTER_VERSION_MINOR   (0)
 
@@ -125,7 +125,7 @@ HQAPI uint32_t          GetNpcIdOfAgent(AgentId agent_id);
 HQAPI bool              GetItem(ApiItem *item, uint32_t item_id);
 HQAPI bool              GetItemOfAgent(ApiItem *item, AgentId agent_id);
 HQAPI BagEnum           GetItemLocation(uint32_t item_id, unsigned int *slot);
-HQAPI size_t            GetItemModStruct(uint32_t item_id, uint32_t *buffer, size_t length);
+HQAPI int            GetItemModStruct(uint32_t item_id, uint32_t *buffer, size_t length);
 HQAPI size_t            GetItemName(uint32_t item_id, uint16_t* buffer, size_t length);
 HQAPI size_t            GetBagCapacity(BagEnum bag);
 HQAPI size_t            GetBagItems(BagEnum bag, ApiItem *buffer, size_t length);
