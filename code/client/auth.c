@@ -161,8 +161,8 @@ void HandleAccountInfo(Connection *conn, size_t psize, Packet *packet)
         }
     }
 
-    struct kstr name = client->current_character->name;
-    LogInfo("Current character: %.*ls", name.length, name.buffer);
+    Character *cc = client->current_character;
+    LogInfo("Current character: %.*ls", cc->name.length, cc->name_buffer);
 }
 
 void HandleCharacterInfo(Connection *conn, size_t psize, Packet *packet)
@@ -196,7 +196,7 @@ void HandleCharacterInfo(Connection *conn, size_t psize, Packet *packet)
     }
     init_character(character);
     character->map = pack->last_map_id;
-    kstr_read(&character->name, pack->name, ARRAY_SIZE(pack->name));
+    kstr_hdr_read(&character->name, pack->name, ARRAY_SIZE(pack->name));
     uuid_dec_le(pack->uuid, &character->uuid);
 }
 
@@ -258,7 +258,7 @@ void AuthSrv_ComputerInfo(Connection *conn)
     kstr_write(&username, info.username, ARRAY_SIZE(info.username));
 
     ComputerHash hash = NewPacket(AUTH_CMSG_SEND_COMPUTER_HASH);
-    hash.version = GUILD_WARS_VERSION;
+    hash.version = options.game_version;
     memcpy(hash.hash, "\x19\x0D\xB0\x37\xE6\x05\x13\x6B\x86\x18\x66\x28\x45\x7E\xDD\xB5", 16);
 
     SendPacket(conn, sizeof(info), &info);

@@ -35,8 +35,6 @@ typedef struct GameServerTransfer {
     struct sockaddr host;
 } GameServerTransfer;
 
-typedef array(uint32_t) array_uint32_t;
-
 //
 // AwaitState is used to connect and start playing a character.
 // Every state should be added here to precisely know what is
@@ -96,11 +94,11 @@ typedef struct GwClient {
 
     struct uuid         uuid;
 
-    struct kstr         email;
-    struct kstr         charname;
-    char                password[20]; // sha1(pswd:mail)
+    struct kstr_hdr     email;
     uint16_t            email_buffer[100];
+    struct kstr_hdr     charname;
     uint16_t            charname_buffer[64];
+    char                password[20]; // sha1(pswd:mail)
 
     struct uuid         portal_token;
     struct uuid         portal_user_id;
