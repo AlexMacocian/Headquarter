@@ -11,7 +11,9 @@ class FileScanner:
     def __init__(self, path, section_name = '.text'):
         self.sections = []
         section_name = section_name.encode('ascii')
-        self.parsed = pefile.PE(path, fast_load=True)
+        with open(path,'rb') as f:
+            exe_data = f.read()
+        self.parsed = pefile.PE(data=exe_data)
         for section in self.parsed.sections:
             self.sections.append((section, section.get_data()))
             stripped_name = section.Name.strip(b'\0')

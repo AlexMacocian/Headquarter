@@ -25,11 +25,13 @@ def main(args):
     if os.path.isfile(exe_path):
         scanner = FileScanner(exe_path)
         file_id = print_gw_exe_file_id.get_file_id(scanner)
+        #file_id = 0
     else:
         file_id = 0
     
     client = download.FileClient()
     client.connect()
+   
 
     if (file_id == 0) or (client.file_id_latest_exe != file_id):
         fr = client.request_file(client.file_id_latest_exe)
@@ -38,7 +40,9 @@ def main(args):
                 progress.update(fr.last_chunk)
 
         # The scanner holds reference to `exe_path` preventing it from being overwritten.
-        del scanner
+        if 'scanner' in globals():
+            del scanner
+        os.unlink(exe_path)
         with open(exe_path, 'wb') as fd:
             fd.write(fr.decompressed())
         scanner = FileScanner(exe_path)
