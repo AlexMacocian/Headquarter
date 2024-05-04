@@ -151,8 +151,14 @@ void parse_command_args(int argc, const char **argv)
     }
 
     if (!options.file_game_version[0]) {
+        // No version argument; use hard coded one
         options.game_version = GUILD_WARS_VERSION;
+    }
+    else if (atoi(options.file_game_version) > 0) {
+        // Version argument is numeric
+        options.game_version = (uint32_t)atoi(options.file_game_version);
     } else {
+        // Version argument may be a location on disk of a Gw.build file
         FILE *file;
         if ((file = fopen(options.file_game_version, "rb")) == NULL) {
             fprintf(stderr, "Failed to open '%s', err: %d\n", options.file_game_version, errno);
