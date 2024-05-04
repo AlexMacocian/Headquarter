@@ -174,6 +174,7 @@ void Network_Init(void)
     FILE* file = 0;
     char dir_path[260];
     length = dlldir(dir_path, sizeof(dir_path));
+    LogInfo("Looking for gw_%d.pub...", options.game_version);
     for (int i = 0; i < 6 && !file_read_ok; i++) {
         snprintf(file_path, sizeof(file_path), "%s/data/gw_%d.pub", dir_path, options.game_version);
         dir_path[length++] = '/';
@@ -418,6 +419,7 @@ bool AuthSrv_Connect(Connection *conn)
     if (conn->host.sa_family == 0) {
         // This could happend if we don't have an internet connection
         if (array_size(&AuthSrv_IPs) == 0) {
+            LogError("AuthSrv_Connect: No AuthSrv_IPs", conn->name);
             NetConn_Reset(conn);
             return false;
         }
@@ -425,18 +427,23 @@ bool AuthSrv_Connect(Connection *conn)
     }
 
     conn->fd = create_socket();
-    conn->t0 = time_get_ms();
-    conn->secured = false;
 
     if (conn->fd.handle == INVALID_SOCKET) {
-        LogError("'socket' failed. (%d)", os_errno);
+        LogError("AuthSrv_Connect: create_socket() failed. (%d)", os_errno);
         NetConn_Reset(conn);
         return false;
     }
 
-    result = connect(conn->fd.handle, cast(struct sockaddr *)&conn->host, sizeof(conn->host));
+    conn->t0 = time_get_ms();
+    conn->secured = false;
+
+    int retries = 5;
+    result = SOCKET_ERROR;
+    for (int i = 0; i < retries && result == SOCKET_ERROR; i++) {
+        result = connect(conn->fd.handle, cast(struct sockaddr *)&conn->host, sizeof(conn->host));
+    }
     if (result == SOCKET_ERROR) {
-        LogError("'connect' failed. (%d)", os_errno);
+        LogError("AuthSrv_Connect: connect() failed after %d retries.", retries, os_errno);
         NetConn_Reset(conn);
         return false;
     }
@@ -456,18 +463,19 @@ bool AuthSrv_Connect(Connection *conn)
 
     result = send(conn->fd.handle, cast(char *)&version, sizeof(version), 0);
     if (result == SOCKET_ERROR) {
-        LogError("'send' failed. (%d)", os_errno);
+        LogError("AuthSrv_Connect: send() failed. (%d)", os_errno);
         NetConn_Reset(conn);
         return false;
     }
 
     if (!key_exchange_helper(conn, &official_server_keys)) {
+        LogError("AuthSrv_Connect: key_exchange_helper() failed.");
         NetConn_Reset(conn);
         return false;        
     }
 
     socket_set_nonblock(&conn->fd);
-    LogInfo("Auth Handshake successful!");
+    LogInfo("AuthSrv_Connect: Auth Handshake successful!");
     return true;
 }
 
@@ -482,22 +490,24 @@ bool GameSrv_Connect(Connection *conn,
     conn->proto = ConnectionType_Game;
 
     conn->fd = create_socket();
-    conn->t0 = time_get_ms();
-    conn->secured = false;
 
     if (conn->fd.handle == INVALID_SOCKET) {
-        LogError("'socket' failed. (%d)", os_errno);
+        LogError("GameSrv_Connect: create_socket() failed. (%d)", os_errno);
         NetConn_Reset(conn);
         return false;
     }
 
+    conn->t0 = time_get_ms();
+    conn->secured = false;
+
     // 3 retries
+    int retries = 5;
     result = SOCKET_ERROR;
-    for (int i = 0; i < 5 && result == SOCKET_ERROR; i++) {
+    for (int i = 0; i < retries && result == SOCKET_ERROR; i++) {
         result = connect(conn->fd.handle, cast(struct sockaddr *)&conn->host, sizeof(conn->host));
     }
     if (result == SOCKET_ERROR) {
-        LogError("'connect' failed. (%d)", os_errno);
+        LogError("GameSrv_Connect: connect() failed after %d retries.", retries, os_errno);
         NetConn_Reset(conn);
         return false;
     }
@@ -524,18 +534,19 @@ bool GameSrv_Connect(Connection *conn,
 
     result = send(conn->fd.handle, cast(char *)&version, sizeof(version), 0);
     if (result == SOCKET_ERROR) {
-        LogError("'send' failed. (%d)", os_errno);
+        LogError("GameSrv_Connect: send() failed. (%d)", os_errno);
         NetConn_Reset(conn);
         return false;
     }
 
     if (!key_exchange_helper(conn, &official_server_keys)) {
+        LogError("GameSrv_Connect: key_exchange_helper() failed.");
         NetConn_Reset(conn);
         return false;
     }
 
     socket_set_nonblock(&conn->fd);
-    LogInfo("Game Handshake successful!");
+    LogInfo("GameSrv_Connect: Game Handshake successful!");
     return true;
 }
 
@@ -596,8 +607,10 @@ size_t NetMsg_Unpack(const uint8_t *data, size_t data_size,
     Packet *packet, size_t pack_size, MsgFormat *format)
 {
     int retval = unpack(data, data_size, cast(uint8_t *)packet, pack_size, format->fields, format->count);
-    if (retval < 0)
+    if (retval < 0) {
+        LogError("NetMsg_Unpack: Failed to unpack() for message header %u", format->header);
         return 0;
+    }
     return (size_t)retval;
 }
 
@@ -686,7 +699,7 @@ void NetConn_Recv(Connection *conn)
     int err = os_errno;
     if (iresult == SOCKET_ERROR) {
         if (!socket_would_block(err)) {
-            LogError("WSARecv failed. (%d)", err);
+            LogError("NetConn_Recv: recv() on %s failed. (%d)", conn->name, err);
             NetConn_HardShutdown(conn);
             client->ingame = false;
         }
