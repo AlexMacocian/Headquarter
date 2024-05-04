@@ -428,9 +428,8 @@ MsgField AUTH_SERVER_0000[2] = {
 };
 
 // Handler Rva: 0008CB20
-MsgField AUTH_SERVER_0001[5] = {
+MsgField AUTH_SERVER_0001[4] = {
     {TYPE_MSG_HEADER, 1},
-    {TYPE_DWORD, 0},
     {TYPE_DWORD, 0},
     {TYPE_DWORD, 0},
     {TYPE_DWORD, 0},
