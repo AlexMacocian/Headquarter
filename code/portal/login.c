@@ -139,12 +139,12 @@ static int recv_sts_response(
     }
 
     if (reply->status_code != 200) {
-        fprintf(stderr, "Unexpected status code %u", reply->status_code);
+        fprintf(stderr, "Unexpected status code %u\n", reply->status_code);
         return 1;
     }
 
     if (reply->sequence_number != expected_seq_number) {
-        fprintf(stderr, "Sequence number doesn't match expected sequence number");
+        fprintf(stderr, "Sequence number doesn't match expected sequence number\n");
         return 1;
     }
 
@@ -257,7 +257,7 @@ static int read_user_code(char *buffer, size_t size, size_t *ret)
 {
     printf("Enter code: ");
 
-    if (fgets(buffer, size, stdin) == NULL)
+    if (fgets(buffer, (int)size, stdin) == NULL)
         return 1;
 
     // The complete line didn't fit in the buffer.
@@ -272,6 +272,7 @@ static int auth2f_upgrade_totp(
     struct sts_connection *sts,
     struct ssl_sts_connection *ssl,
     const char *otp,
+    size_t otp_len,
     int remember_me)
 {
     const char url[] = "/Auth2f/Upgrade";
@@ -282,7 +283,7 @@ static int auth2f_upgrade_totp(
     array_reserve(&content, 1024);
 
     appendf(&content, "<Request>\n");
-    appendf(&content, "<Otp>%06d</Otp>\n", otp);
+    appendf(&content, "<Otp>%.*s</Otp>\n", (int)otp_len, otp);
     if (remember_me != 0)
         appendf(&content, "<WhitelistIp/>\n");
     appendf(&content, "</Request>\n");
@@ -518,7 +519,7 @@ static int sts_ping(struct sts_connection *sts, struct ssl_sts_connection *ssl)
 }
 #endif
 
-int portal_login(struct portal_login_result *result, const char *username, const char *password)
+int portal_login(struct portal_login_result *result, const char *username, const char *password, const char *secrets)
 {
     int ret;
 
@@ -580,12 +581,28 @@ int portal_login(struct portal_login_result *result, const char *username, const
 
         char otp[32];
         size_t otp_len;
-        if ((ret = read_user_code(otp, sizeof(otp), &otp_len)) != 0) {
-            goto cleanup;
+
+        if (secrets != NULL && ret == PORTAL_ERR_2FA_REQUIRE_TOTP) {
+            uint32_t code;
+            if (!totp(secrets, 6, &code)) {
+                fprintf(stderr, "Failed to generate the 2fa code\n");
+                goto cleanup;
+            }
+
+            if ((ret = snprintf(otp, sizeof(otp), "%06d", code)) <= 0) {
+                fprintf(stderr, "Failed to stringnify the 2fa code\n");
+                goto cleanup;
+            }
+
+            otp_len = (size_t)ret;
+        } else {
+            if ((ret = read_user_code(otp, sizeof(otp), &otp_len)) != 0) {
+                goto cleanup;
+            }
         }
 
         const int remember_me = 1;
-        if ((ret = auth2f_upgrade_totp(&sts, &ssl, otp, remember_me)) != 0) {
+        if ((ret = auth2f_upgrade_totp(&sts, &ssl, otp, otp_len, remember_me)) != 0) {
             goto cleanup;
         }
     }
@@ -612,7 +629,7 @@ cleanup:
     return ret;
 }
 
-int portal_login_dummy(struct portal_login_result *result, const char *username, const char *password)
+int portal_login_dummy(struct portal_login_result *result, const char *username, const char *password, const char *secret)
 {
     struct str token = s_from_c_str("d8b9bf5d-90b1-4cbd-9b76-88da7be763b6");
     struct str user_id = s_from_c_str("fa520ee2-4419-4eb4-ae49-6e9abe6ef24f");

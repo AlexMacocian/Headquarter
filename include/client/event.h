@@ -25,6 +25,8 @@ typedef enum EventType {
     EventType_WorldCantTravel,
     EventType_WorldMapEnter,
     EventType_WorldMapLeave,
+    EventType_PlayerPartySize,
+    EventType_AgentDespawned,
 
     EventType_Count
 } EventType;
@@ -83,10 +85,10 @@ typedef struct Event {
             uint8_t             search_type; // 0=hunting, 1=mission, 2=quest, 3=trade, 4=guild
             uint8_t             hardmode;
             uint16_t            district_number;
-            uint8_t            language;
-            uint8_t            primary;
-            uint8_t            secondary;
-            uint8_t            level;
+            uint8_t             language;
+            uint8_t             primary;
+            uint8_t             secondary;
+            uint8_t             level;
             struct {
                 size_t          length;
                 const uint16_t* buffer;
@@ -102,6 +104,13 @@ typedef struct Event {
         struct {
             int8_t value;
         } WorldCantTravel;
+        struct {
+            uint16_t player_id;
+            uint8_t size;
+        } PlayerPartySize;
+        struct {
+            AgentId agent_id;
+        } AgentDespawned;
     };
 } Event;
 

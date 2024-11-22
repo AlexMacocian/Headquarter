@@ -47,7 +47,7 @@
 #include <common/macro.h>
 #include <common/time.h>
 #include <common/assert.h>
-#include <common/dlfunc.h>
+#include <common/paths.h>
 #include <common/socket.h>
 #include <common/thread.h>
 #include <common/process.h>
@@ -67,6 +67,7 @@
 
 #ifdef _WIN32
 #pragma warning(disable: 4100 4189)
+#pragma warning(disable: 4214) // nonstandard extension used: bit field types other than int
 #endif
 
 #include "arc4.h"
@@ -80,8 +81,7 @@
 
 // @Cleanup: Temporary
 typedef struct GwClient GwClient;
-
-typedef array(uint32_t) array_uint32_t;
+typedef struct World World;
 
 #include "bag.h"
 #include "chat.h"

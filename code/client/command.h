@@ -18,6 +18,7 @@ typedef struct CommandOptions {
     char        email[64];
     char        password[100];
     char        charname[20];
+    char        secret_2fa[64];
     char        log_file_name[256];
 
     uint32_t    game_version;
@@ -40,8 +41,8 @@ typedef struct CommandOptions {
 } CommandOptions;
 
 extern CommandOptions options;
-extern int parsed_argc;
-extern char** parsed_argv;
+extern int    g_Argc;
+extern char **g_Argv;
 
 void print_help(bool terminate);
-void parse_command_args(int argc, const char **argv);
+void parse_command_args(int argc, char **argv);

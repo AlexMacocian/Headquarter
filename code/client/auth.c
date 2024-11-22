@@ -23,7 +23,7 @@ void HandleAccountSettings(Connection *conn, size_t psize, Packet *packet)
     (void)pack;
 }
 
-void HandleErrorMessage(Connection *conn, size_t psize, Packet *packet)
+void HandleRequestResponse(Connection *conn, size_t psize, Packet *packet)
 {
 #pragma pack(push, 1)
     typedef struct {
@@ -33,7 +33,7 @@ void HandleErrorMessage(Connection *conn, size_t psize, Packet *packet)
     } ErrorMessage;
 #pragma pack(pop)
 
-    assert(packet->header == AUTH_SMSG_ERROR_MESSAGE);
+    assert(packet->header == AUTH_SMSG_REQUEST_RESPONSE);
     assert(sizeof(ErrorMessage) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
@@ -50,7 +50,7 @@ void HandleErrorMessage(Connection *conn, size_t psize, Packet *packet)
         }
     }
 
-    LogDebug("HandleErrorMessage: {async_type: %d, trans_id: %lu, code: %lu}", type, pack->trans_id, pack->code);
+    LogDebug("HandleRequestResponse: {async_type: %d, trans_id: %lu, code: %lu}", type, pack->trans_id, pack->code);
     const char *error_s = get_error_s(pack->code);
     if (pack->code != 0) {
         LogDebug("(Code=%03d) %s", pack->code, error_s);
@@ -106,7 +106,6 @@ void HandleSessionInfo(Connection *conn, size_t psize, Packet *packet)
         Header header;
         uint32_t server_salt;
         uint32_t unk0;
-        uint32_t unk1;
     } SessionInfo;
 #pragma pack(pop)
 
@@ -152,16 +151,14 @@ void HandleAccountInfo(Connection *conn, size_t psize, Packet *packet)
     uuid_dec_le(pack->account_uuid, &client->uuid);
     uuid_dec_le(pack->character_uuid, &char_uuid);
 
-    Character *character;
-    array_foreach(character, &client->characters) {
-        if (uuid_equals(&character->uuid, &char_uuid)) {
-            client->current_character = character;
+    for (size_t idx = 0; idx < client->characters.size; ++idx) {
+        Character *ch = &client->characters.data[idx];
+        if (uuid_equals(&ch->uuid, &char_uuid)) {
+            LogInfo("Current character: %.*ls", ch->name.length, ch->name_buffer);
+            client->current_character_idx = idx;
             break;
         }
     }
-
-    Character *cc = client->current_character;
-    LogInfo("Current character: %.*ls", cc->name.length, cc->name_buffer);
 }
 
 void HandleCharacterInfo(Connection *conn, size_t psize, Packet *packet)
@@ -191,10 +188,22 @@ void HandleCharacterInfo(Connection *conn, size_t psize, Packet *packet)
         LogError("Couldn't create a new character");
         return;
     }
+
     init_character(character);
-    character->map = le16dec(&pack->extended[2]);
     kstr_hdr_read(&character->name, pack->name, ARRAY_SIZE(pack->name));
     uuid_dec_le(pack->uuid, &character->uuid);
+
+    size_t min_size = offsetof(CharacterSettings, h0021);
+    if (pack->n_extended < min_size) {
+        LogWarn(
+            "Extended info in `CharacterInfo` is smaller (%zu bytes) than minimum expected (%zu bytes)",
+            pack->n_extended,
+            min_size
+        );
+        return;
+    }
+
+    memcpy(&character->settings, pack->extended, pack->n_extended);
 }
 
 void AuthSrv_HeartBeat(Connection *conn, msec_t tick)
@@ -262,29 +271,6 @@ void AuthSrv_ComputerInfo(Connection *conn)
     SendPacket(conn, sizeof(hash), &hash);
 }
 
-void AuthSrv_HardwareInfo(Connection *conn)
-{
-    // @Remark: Holy fuck c++ is retarded. Why the fuck it force you to add a null-terminated ?
-    uint8_t hash[/* 16 */] = "\x9B\x99\x78\x8D\x2F\x01\xFA\x4F\x99\x82\xD3\xB8\xBD\x83\xCD\xF6";
-    uint8_t info[/* 92 */] = "\x03\x00\x5C\x00\x04\x00\xDE\x03\x46\x0D\xC3\x06\x47\x65\x6E\x75\x69\x6E\x65\x49\x6E\x74\x65\x6C\x06\x02\x00\x00\x04\x00\x00\x00\xC0\x11\x00\x00\x60\x11\x00\x00\xDE\x10\x00\x00\xC6\x07\x20\x90\x55\x6E\x6B\x6E\x6F\x77\x6E\x20\x44\x65\x76\x69\x63\x65\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x55\x6E\x6B\x6E\x6F\x77\x6E\x20\x56\x65\x6E\x64\x6F\x72\x00\x00\x00\x00\x00\x00";
-
-#pragma pack(push, 1)
-    typedef struct {
-        Header header;
-        uint32_t n_info;
-        uint8_t info[92];
-        uint8_t hash[16];
-    } HardwareInfo;
-#pragma pack(pop)
-
-    HardwareInfo packet = NewPacket(AUTH_CMSG_SEND_HARDWARE_INFO);
-    packet.n_info = 92;
-    memcpy(packet.info, info, 92);
-    memcpy(packet.hash, hash, 16);
-
-    SendPacket(conn, sizeof(packet), &packet);
-}
-
 // 0 = main town
 // 1 = main explorable
 // 2 = guild hall
@@ -309,13 +295,17 @@ void AuthSrv_RequestInstance(Connection *conn, uint32_t trans_id,
     } CharacterPlayInfo;
 #pragma pack(pop)
 
-    CharacterPlayInfo packet = NewPacket(AUTH_CMSG_REQUEST_INSTANCE);
+    CharacterPlayInfo packet = NewPacket(AUTH_CMSG_REQUEST_GAME_INSTANCE);
     packet.trans_id = trans_id;
     packet.map_type = type;
     packet.map_id = map_id;
     packet.region = region;
     packet.district = district;
     packet.language = language;
+
+    client->state = AwaitGameServerInfo;
+
+    LogDebug("AuthSrv_RequestInstance: map %d, district_region %d, district_number %d, language %d", packet.map_id, packet.region, packet.district, packet.language);
 
     SendPacket(conn, sizeof(packet), &packet);
 }
@@ -366,6 +356,32 @@ void AuthSrv_SetPlayerStatus(Connection *conn, PlayerStatus status)
     SendPacket(conn, sizeof(packet), &packet);
 }
 
+void AuthSrv_AddFriend(Connection* conn, const uint16_t* _name)
+{
+#pragma pack(push, 1)
+    typedef struct {
+        Header header;
+        int32_t h0004;
+        int32_t h0008;
+        uint16_t name[20];
+        uint16_t account[20];
+    } AddFriend;
+#pragma pack(pop)
+
+    AddFriend packet = NewPacket(AUTH_CMSG_FRIEND_ADD);
+
+    DECLARE_KSTR(name, ARRAY_SIZE(packet.name));
+    kstr_read(&name, _name, ARRAY_SIZE(packet.name));
+
+    kstr_write(&name, packet.name, ARRAY_SIZE(packet.name));
+    kstr_write(&name, packet.account, ARRAY_SIZE(packet.account));
+
+    packet.h0004 = 1;
+    packet.h0008 = 1;
+
+    SendPacket(conn, sizeof(packet), &packet);
+}
+
 void AuthSrv_SendPacket35(Connection *conn)
 {
 #pragma pack(push, 1)
@@ -387,7 +403,7 @@ void AuthSrv_RegisterCallbacks(Connection *conn)
 
     MsgHandler *handlers = conn->handlers.data;
 
-    handlers[AUTH_SMSG_ERROR_MESSAGE]           = HandleErrorMessage;
+    handlers[AUTH_SMSG_REQUEST_RESPONSE]        = HandleRequestResponse;
     handlers[AUTH_SMSG_SERVER_RESPONSE]         = HandleServerReponse;
 
     handlers[AUTH_SMSG_SESSION_INFO]            = HandleSessionInfo;

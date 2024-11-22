@@ -1,6 +1,7 @@
 import argparse
 import download
 import dump_key
+import dump_area_info
 import inflate
 import os
 import print_gw_exe_file_id
@@ -42,7 +43,8 @@ def main(args):
         # The scanner holds reference to `exe_path` preventing it from being overwritten.
         if 'scanner' in globals():
             del scanner
-        os.unlink(exe_path)
+        if os.path.isfile(exe_path):
+          os.unlink(exe_path)
         with open(exe_path, 'wb') as fd:
             fd.write(fr.decompressed())
         scanner = FileScanner(exe_path)
@@ -56,7 +58,10 @@ def main(args):
     build_file_path = get_path_from_workspace(args.workspace, 'Gw.build')
     print(f"Writing build number to '{build_file_path}'")
     open(build_file_path, 'w').write(f'{build}')
-
+    
+    area_info_file = get_path_from_workspace(args.workspace, 'code', 'client', 'data', f'area_info.data')
+    area_info = dump_area_info.get_area_info_from_scanner(scanner)
+    open(area_info_file, 'w').write(f'{area_info}')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

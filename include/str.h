@@ -37,6 +37,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdint.h>
+#include <assert.h>
 
 #define memzero(b, s) memset(b, 0, s)
 
@@ -247,13 +248,14 @@ wcsnicmp(const wchar_t *s1, const wchar_t *s2, size_t count)
 static int
 safe_strcpy(char *dest, size_t size, const char *src)
 {
-    size_t length = strlen(src);
+    assert(dest != NULL);
+    size_t length = src ? strlen(src) : 0;
     if (length >= size) {
         if (size > 0)
             dest[0] = 0;
         return 0;
     } else {
-        memcpy(dest, src, size);
+        memcpy(dest, src, length);
         dest[length] = 0;
         return 1;
     }

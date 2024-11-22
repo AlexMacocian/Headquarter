@@ -5,10 +5,10 @@
 
 #define PLUGIN_MAX_PATH (256)
 
-struct list   plugins = LIST_INITIALIZER(plugins);
-static size_t plugins_count = 0;
-static Plugin plugins_table[PLUGINS_MAX * 2];
-static size_t array_find_plugin(Plugin *table, size_t size, void *handle);
+struct list plugins = LIST_INITIALIZER(plugins);
+size_t plugins_count = 0;
+Plugin plugins_table[PLUGINS_MAX * 2];
+size_t array_find_plugin(Plugin *table, size_t size, void *handle);
 
 bool plugin_load(const char *path)
 {
@@ -51,8 +51,8 @@ bool plugin_load(const char *path)
     safe_strcpy(temp_path, PLUGIN_MAX_PATH, path);
 #endif
 
-    plugin->module = dllopen(temp_path);
-    if (plugin->module == NULL) {
+    int err;
+    if ((err = open_dll(temp_path, &plugin->module)) != 0) {
         LogError("Couldn't dllopen the plugin '%s'", temp_path);
         return false;
     }
@@ -60,8 +60,7 @@ bool plugin_load(const char *path)
     plugin->path = path;
 
     PluginEntry_pt PluginInit;
-    *(void **)&PluginInit = dllsym(plugin->module, "PluginEntry");
-    if (PluginInit == NULL) {
+    if ((err = get_dll_symbol(plugin->module, "PluginEntry", (void **)&PluginInit)) != 0) {
         LogError("Couldn't dllsym plugin '%s'", path);
         plugin_unload(plugin);
         return false;
@@ -91,14 +90,14 @@ void plugin_unload(Plugin *plugin)
     if (!list_node_unlinked(&plugin->entry))
         list_remove(&plugin->entry);
     if (plugin->module) {
-        dllclose(plugin->module);
+        close_dll(plugin->module);
         plugin->module = NULL;
     }
     plugin->plugin_id = 0;
     plugins_count--;
 }
 
-static size_t array_find_plugin(Plugin *table, size_t size, void *handle)
+size_t array_find_plugin(Plugin *table, size_t size, void *handle)
 {
     size_t try_count = 0;
     uint32_t hash  = hash_ptr(handle) & 0xFFFFFFFF;

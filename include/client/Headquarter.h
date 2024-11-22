@@ -1,7 +1,7 @@
 #ifndef HEADQUARTER_H
 #define HEADQUARTER_H
 
-#define GUILD_WARS_VERSION          (37440)
+#define GUILD_WARS_VERSION          (37506)
 #define HEADQUARTER_VERSION_MAJOR   (1)
 #define HEADQUARTER_VERSION_MINOR   (0)
 
@@ -19,11 +19,17 @@
 #  define __cdecl __attribute__((__cdecl__))
 # endif
 
+#include <stdint.h>
+
 #include "str.h"
 #include <common/array.h>
 #include <common/assert.h>
-#include <common/dlfunc.h>
+#include <common/paths.h>
 #include <common/noreturn.h>
+
+#ifndef _Noreturn
+#define _Noreturn
+#endif
 
 typedef uint32_t uint;
 typedef uint64_t msec_t;
@@ -69,6 +75,8 @@ HQAPI void              LogDebug(const char *fmt, ...);
 HQAPI void              LogCritical(const char *fmt, ...);
 HQAPI void              LogInfo(const char *fmt, ...);
 HQAPI void              LogWarn(const char *fmt, ...);
+HQAPI void              LogTrace(const char *fmt, ...);
+HQAPI char**            GetCommandLineArgs(int *argc);
 
 HQAPI _Noreturn void    FreePluginAndExitThread(PluginObject *module, int retval);
 HQAPI size_t            GetPlugins(ApiPlugin *buffer, size_t length);
@@ -87,11 +95,17 @@ HQAPI void              LogoutToCharselect(void);
 
 HQAPI int               GetMapId(void);
 HQAPI District          GetDistrict(void);
+HQAPI DistrictLanguage  GetDistrictLanguage(void);
+HQAPI DistrictRegion    GetDistrictRegion(void);
 HQAPI int               GetDistrictNumber(void);
+HQAPI DistrictLanguage  GetDistrictLanguage(void);
+HQAPI DistrictRegion    GetDistrictRegion(void);
 HQAPI void              Travel(uint32_t map_id, District district, uint16_t district_number);
 HQAPI void              TravelHall(uint32_t guild_id);
 HQAPI void              LeaveHall(void);
-HQAPI void              RedirectMap(uint32_t map_id, uint32_t type, District district, int district_number);
+HQAPI void              RedirectMap(uint32_t map_id, District district, uint32_t district_number);
+HQAPI bool              IsMapUnlocked(uint32_t map_id);
+HQAPI size_t            GetMapsUnlocked(uint32_t* buffer, size_t length);
 
 HQAPI bool              GetInCinematic(void);
 HQAPI void              SkipCinematic(void);
@@ -125,7 +139,7 @@ HQAPI uint32_t          GetNpcIdOfAgent(AgentId agent_id);
 HQAPI bool              GetItem(ApiItem *item, uint32_t item_id);
 HQAPI bool              GetItemOfAgent(ApiItem *item, AgentId agent_id);
 HQAPI BagEnum           GetItemLocation(uint32_t item_id, unsigned int *slot);
-HQAPI int            GetItemModStruct(uint32_t item_id, uint32_t *buffer, size_t length);
+HQAPI size_t            GetItemModStruct(uint32_t item_id, uint32_t *buffer, size_t length);
 HQAPI size_t            GetItemName(uint32_t item_id, uint16_t* buffer, size_t length);
 HQAPI size_t            GetBagCapacity(BagEnum bag);
 HQAPI size_t            GetBagItems(BagEnum bag, ApiItem *buffer, size_t length);
@@ -137,6 +151,8 @@ HQAPI size_t            GetQuests(ApiQuest *buffer, size_t length);
 
 HQAPI size_t            GetFriends(ApiFriend* buffer, size_t length);
 HQAPI bool              GetFriendByUuid(ApiFriend *frnd, const uint8_t *uuid);
+HQAPI bool              GetFriend(ApiFriend* frnd, const uint16_t* name);
+HQAPI void              AddFriend(const uint16_t* name);
 
 HQAPI FactionPoint      GetLuxonPoints(void);
 HQAPI FactionPoint      GetKurzickPoints(void);

@@ -5,8 +5,8 @@
 
 void player_is_created(GwClient *client, AgentId agent_id)
 {
-    World *world = &client->world;
-    client->player_agent_id = agent_id;
+    World *world = get_world_or_abort(client);
+    world->player_agent_id = agent_id;
 
     assert(array_inside(&world->agents, agent_id));
     assert(array_at(&world->agents, agent_id));
@@ -16,12 +16,12 @@ void player_is_created(GwClient *client, AgentId agent_id)
         return;
 
     assert(array_inside(&world->players, me->player_id));
-    client->player = array_at(&world->players, me->player_id);
-
-    client->player->player_hero = &client->player_hero;
+    Player *player = world->players.data[me->player_id];
+    player->player_hero = client->player_hero; 
+    world->player_id = player->player_id;
 }
 
-void HandlePlayerAttrSet(Connection *conn, size_t psize, Packet *packet)
+void HandlePlayerUpdateFactions(Connection *conn, size_t psize, Packet *packet)
 {
 #pragma pack(push, 1)
     typedef struct {
@@ -44,7 +44,7 @@ void HandlePlayerAttrSet(Connection *conn, size_t psize, Packet *packet)
     } PlayerAttr;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_PLAYER_ATTR_SET);
+    assert(packet->header == GAME_SMSG_PLAYER_UPDATE_FACTIONS);
     assert(sizeof(PlayerAttr) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
@@ -69,7 +69,7 @@ void HandlePlayerAttrSet(Connection *conn, size_t psize, Packet *packet)
     client->player_hero.luxon.current     = pack->luxon_current;
 }
 
-void HandlePlayerAttrMaxKurzick(Connection *conn, size_t psize, Packet *packet)
+void HandlePlayerFactionMaxKurzick(Connection *conn, size_t psize, Packet *packet)
 {
 #pragma pack(push, 1)
     typedef struct {
@@ -78,7 +78,7 @@ void HandlePlayerAttrMaxKurzick(Connection *conn, size_t psize, Packet *packet)
     } MaxFaction;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_PLAYER_ATTR_MAX_KURZICK);
+    assert(packet->header == GAME_SMSG_PLAYER_FACTION_MAX_KURZICK);
     assert(sizeof(MaxFaction) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
@@ -88,7 +88,7 @@ void HandlePlayerAttrMaxKurzick(Connection *conn, size_t psize, Packet *packet)
     client->player_hero.kurzick.max = pack->value;
 }
 
-void HandlePlayerAttrMaxLuxon(Connection *conn, size_t psize, Packet *packet)
+void HandlePlayerFactionMaxLuxon(Connection *conn, size_t psize, Packet *packet)
 {
 #pragma pack(push, 1)
     typedef struct {
@@ -97,7 +97,7 @@ void HandlePlayerAttrMaxLuxon(Connection *conn, size_t psize, Packet *packet)
     } MaxFaction;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_PLAYER_ATTR_MAX_LUXON);
+    assert(packet->header == GAME_SMSG_PLAYER_FACTION_MAX_LUXON);
     assert(sizeof(MaxFaction) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
@@ -107,7 +107,7 @@ void HandlePlayerAttrMaxLuxon(Connection *conn, size_t psize, Packet *packet)
     client->player_hero.luxon.max = pack->value;
 }
 
-void HandlePlayerAttrMaxBalthazar(Connection *conn, size_t psize, Packet *packet)
+void HandlePlayerFactionMaxBalthazar(Connection *conn, size_t psize, Packet *packet)
 {
 #pragma pack(push, 1)
     typedef struct {
@@ -116,7 +116,7 @@ void HandlePlayerAttrMaxBalthazar(Connection *conn, size_t psize, Packet *packet
     } MaxFaction;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_PLAYER_ATTR_MAX_BALTHAZAR);
+    assert(packet->header == GAME_SMSG_PLAYER_FACTION_MAX_BALTHAZAR);
     assert(sizeof(MaxFaction) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
@@ -126,7 +126,7 @@ void HandlePlayerAttrMaxBalthazar(Connection *conn, size_t psize, Packet *packet
     client->player_hero.balthazar.max = pack->value;
 }
 
-void HandlePlayerAttrMaxImperial(Connection *conn, size_t psize, Packet *packet)
+void HandlePlayerFactionMaxImperial(Connection *conn, size_t psize, Packet *packet)
 {
 #pragma pack(push, 1)
     typedef struct {
@@ -135,7 +135,7 @@ void HandlePlayerAttrMaxImperial(Connection *conn, size_t psize, Packet *packet)
     } MaxFaction;
 #pragma pack(pop)
     
-    assert(packet->header == GAME_SMSG_PLAYER_ATTR_MAX_IMPERIAL);
+    assert(packet->header == GAME_SMSG_PLAYER_FACTION_MAX_IMPERIAL);
     assert(sizeof(MaxFaction) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
@@ -145,7 +145,7 @@ void HandlePlayerAttrMaxImperial(Connection *conn, size_t psize, Packet *packet)
     client->player_hero.imperial.max = pack->value;
 }
 
-void HandlePlayerAttrUpdate(Connection *conn, size_t psize, Packet *packet)
+void HandlePlayerFactionUpdate(Connection *conn, size_t psize, Packet *packet)
 {
 #pragma pack(push, 1)
     typedef struct {
@@ -155,7 +155,7 @@ void HandlePlayerAttrUpdate(Connection *conn, size_t psize, Packet *packet)
     } UpdateAttr;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_PLAYER_ATTR_UPDATE);
+    assert(packet->header == GAME_SMSG_PLAYER_FACTION_UPDATE);
     assert(sizeof(UpdateAttr) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
@@ -187,6 +187,35 @@ void HandlePlayerAttrUpdate(Connection *conn, size_t psize, Packet *packet)
     }
 }
 
+void HandlePlayerUnlockedAreas(Connection* conn, size_t psize, Packet* packet) {
+#pragma pack(push, 1)
+    typedef struct {
+        Header header;
+        uint32_t missions_completed_size;
+        uint32_t missions_completed_buffer[32];
+        uint32_t unlocked2_size;
+        uint32_t unlocked2[32];
+        uint32_t unlocked3_size;
+        uint32_t unlocked3[32];
+        uint32_t unlocked4_size;
+        uint32_t unlocked4[32];
+        uint32_t maps_unlocked_size;
+        uint32_t maps_unlocked_buf[32];
+    } MapsUnlocked;
+#pragma pack(pop)
+    assert(packet->header == GAME_SMSG_MAPS_UNLOCKED);
+    assert(sizeof(MapsUnlocked) == psize);
+
+    GwClient* client = cast(GwClient*)conn->data;
+    MapsUnlocked* pack = cast(MapsUnlocked*)packet;
+    assert(client && client->game_srv.secured);
+
+    array_resize(&client->player_hero.maps_unlocked, pack->maps_unlocked_size);
+    for (uint32_t i = 0; i < pack->maps_unlocked_size; i++) {
+        array_set(&client->player_hero.maps_unlocked, i, pack->maps_unlocked_buf[i]);
+    }
+}
+
 void GameSrv_DonateFaction(GwClient *client, FactionType faction, int amount)
 {
 #pragma pack(push, 1)
@@ -211,9 +240,10 @@ void GameSrv_DonateFaction(GwClient *client, FactionType faction, int amount)
 void GameSrv_PlayerLoadSkills(GwClient* client, uint32_t* skill_ids) {
     assert(client && client->game_srv.secured);
 
-    Agent* agent = get_agent_safe(client, client->player_agent_id);
+    World *world = get_world_or_abort(client);
+    Agent* agent = get_agent_safe(world, world->player_agent_id);
     if (!agent) {
-        LogError("Can't get player agent '%d'", client->player_agent_id);
+        LogError("Can't get player agent '%d'", world->player_agent_id);
         return;
     }
 
@@ -224,9 +254,10 @@ void GameSrv_PlayerLoadAttributes(GwClient* client, ArrayAttribute attributes)
 {
     assert(client && client->game_srv.secured);
 
-    Agent* agent = get_agent_safe(client, client->player_agent_id);
+    World *world = get_world_or_abort(client);
+    Agent* agent = get_agent_safe(world, world->player_agent_id);
     if (!agent) {
-        LogError("Can't get player agent '%d'", client->player_agent_id);
+        LogError("Can't get player agent '%d'", world->player_agent_id);
         return;
     }
 
@@ -237,9 +268,10 @@ void GameSrv_PlayerChangeSecondary(GwClient* client, Profession profession)
 {
     assert(client && client->game_srv.secured);
 
-    Agent* agent = get_agent_safe(client, client->player_agent_id);
+    World *world = get_world_or_abort(client);
+    Agent* agent = get_agent_safe(world, world->player_agent_id);
     if (!agent) {
-        LogError("Can't get player agent '%d'", client->player_agent_id);
+        LogError("Can't get player agent '%d'", world->player_agent_id);
         return;
     }
 

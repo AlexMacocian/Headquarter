@@ -3,7 +3,7 @@
 #endif
 #define CORE_NETWORK_C
 
-static bool NetIsInitialized;
+bool NetIsInitialized;
 
 typedef struct DiffieHellmanCtx {
     mbedtls_mpi prime_modulus;
@@ -17,8 +17,8 @@ typedef struct DiffieHellmanCtx {
  *
  * We provide the function to compute len here.
  */
-static size_t unicode16_len(const uint16_t *s, size_t n);
-static size_t unicode16_cpy(uint16_t *d, const uint16_t *s, size_t n);
+size_t unicode16_len(const uint16_t *s, size_t n);
+size_t unicode16_cpy(uint16_t *d, const uint16_t *s, size_t n);
 
 void NetConn_Reset(Connection *conn)
 {
@@ -126,30 +126,30 @@ typedef union PacketBuffer {
     Packet  packet;
 } PacketBuffer;
 
-static bool socket_would_block(int err);
-static bool key_exchange_helper(Connection *conn, DiffieHellmanCtx *dhm);
-static void arc4_hash(const uint8_t *key, uint8_t *digest);
-static bool read_dhm_key_file(DiffieHellmanCtx *dhm, FILE* file);
+bool socket_would_block(int err);
+bool key_exchange_helper(Connection *conn, DiffieHellmanCtx *dhm);
+void arc4_hash(const uint8_t *key, uint8_t *digest);
+bool read_dhm_key_file(DiffieHellmanCtx *dhm, FILE* file);
 
-static size_t get_static_size(MsgField *field);
-static size_t get_element_size(MsgField *field);
+size_t get_static_size(MsgField *field);
+size_t get_element_size(MsgField *field);
 
-static size_t get_prefix_size(Type type);
-static int unpack(const uint8_t *data, size_t data_size,
+size_t get_prefix_size(Type type);
+int unpack(const uint8_t *data, size_t data_size,
     uint8_t *buffer, size_t buff_size, MsgField *fields, size_t fields_count);
-static int pack(const uint8_t *data, size_t data_size,
+int pack(const uint8_t *data, size_t data_size,
     uint8_t *buffer, size_t buff_size, MsgField *fields, size_t fields_count);
 
-static mbedtls_entropy_context entropy;
-static mbedtls_ctr_drbg_context ctr_drbg;
-static DiffieHellmanCtx official_server_keys;
-static DiffieHellmanCtx custom_server_keys;
+mbedtls_entropy_context entropy;
+mbedtls_ctr_drbg_context ctr_drbg;
+DiffieHellmanCtx official_server_keys;
+DiffieHellmanCtx custom_server_keys;
 
-static SockAddressArray AuthSrv_IPs;
+SockAddressArray AuthSrv_IPs;
 
 bool Net_Initialized = false;
 
-static void DiffieHellmanCtx_Reset(DiffieHellmanCtx *dhm)
+void DiffieHellmanCtx_Reset(DiffieHellmanCtx *dhm)
 {
     mbedtls_mpi_free(&dhm->prime_modulus);
     mbedtls_mpi_free(&dhm->server_public);
@@ -158,6 +158,7 @@ static void DiffieHellmanCtx_Reset(DiffieHellmanCtx *dhm)
 
 void Network_Init(void)
 {
+    int err;
     if (Net_Initialized)
         return;
     
@@ -171,12 +172,14 @@ void Network_Init(void)
 #endif
 
     char file_path[320];
-    int length = 0;
-    bool file_read_ok = false;
-    FILE* file = 0;
+    size_t length;
     char dir_path[260];
-    length = dlldir(dir_path, sizeof(dir_path));
-    LogInfo("Looking for gw_%d.pub...", options.game_version);
+    if ((err = get_executable_dir(dir_path, sizeof(dir_path), &length)) != 0) {
+        abort();
+    }
+
+    FILE* file = NULL;
+    bool file_read_ok = false;
     for (int i = 0; i < 6 && !file_read_ok; i++) {
         snprintf(file_path, sizeof(file_path), "%s/data/gw_%d.pub.txt", dir_path, options.game_version);
         dir_path[length++] = '/';
@@ -273,7 +276,7 @@ bool IPv4ToAddr(const char *host, const char *port, struct sockaddr *sockaddr)
     return true;
 }
 
-static bool read_dhm_key_file(DiffieHellmanCtx *dhm, FILE *file)
+bool read_dhm_key_file(DiffieHellmanCtx *dhm, FILE *file)
 {
     char line[256];
 
@@ -346,7 +349,7 @@ static bool read_dhm_key_file(DiffieHellmanCtx *dhm, FILE *file)
     return true;
 }
 
-static bool socket_would_block(int err)
+bool socket_would_block(int err)
 {
 #ifdef _WIN32
     return err == WSAEWOULDBLOCK;
@@ -359,7 +362,7 @@ static bool socket_would_block(int err)
 #endif
 }
 
-static bool socket_set_nonblock(struct socket *sock)
+bool socket_set_nonblock(struct socket *sock)
 {
 #if _WIN32
     u_long nonblock = 1;
@@ -378,7 +381,7 @@ static bool socket_set_nonblock(struct socket *sock)
 #endif
 }
 
-static bool key_exchange_helper(Connection *conn, DiffieHellmanCtx *dhm)
+bool key_exchange_helper(Connection *conn, DiffieHellmanCtx *dhm)
 {
     // Compute g^x (mod p)
     // Send:
@@ -446,7 +449,7 @@ quick_exist:
     return success;
 }
 
-static struct socket create_socket(void)
+struct socket create_socket(void)
 {
     struct socket sock;
     sock.handle = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -471,7 +474,6 @@ bool AuthSrv_Connect(Connection *conn)
     if (conn->host.sa_family == 0) {
         // This could happend if we don't have an internet connection
         if (array_size(&AuthSrv_IPs) == 0) {
-            LogError("AuthSrv_Connect: No AuthSrv_IPs", conn->name);
             NetConn_Reset(conn);
             return false;
         }
@@ -598,7 +600,7 @@ bool GameSrv_Connect(Connection *conn,
     return true;
 }
 
-static void arc4_hash(const uint8_t *key, uint8_t *digest)
+void arc4_hash(const uint8_t *key, uint8_t *digest)
 {
     typedef union U20 {
         uint8_t  u8[20];
@@ -720,7 +722,7 @@ void NetConn_Send(Connection *conn)
 
     mbedtls_arc4_crypt(&conn->encrypt, size, buff, buff);
 
-    int result = send(conn->fd.handle, cast(const char *)out->data, out->size, 0);
+    int result = send(conn->fd.handle, cast(const char *)out->data, (int)out->size, 0);
     if (result == SOCKET_ERROR) {
         LogError("send failed: %d", os_errno);
         NetConn_HardShutdown(conn);
@@ -742,7 +744,7 @@ void NetConn_Recv(Connection *conn)
 
     uint8_t buffer[5840];
     size_t size = conn->in.capacity - conn->in.size;
-    int iresult = recv(conn->fd.handle, cast(char *)buffer, size, 0);
+    int iresult = recv(conn->fd.handle, cast(char *)buffer, (int)size, 0);
 
     int err = os_errno;
     if (iresult == SOCKET_ERROR) {
@@ -837,7 +839,7 @@ void NetConn_Update(Connection *conn)
 
 // @Cleanup:
 // This is currently unused and the size for string isn't sync with the packets format dump.
-static size_t get_static_size(MsgField *field)
+size_t get_static_size(MsgField *field)
 {
     int param = field->param;
     switch (field->type) {
@@ -862,7 +864,7 @@ static size_t get_static_size(MsgField *field)
     return 0;
 }
 
-static size_t get_element_size(MsgField *field)
+size_t get_element_size(MsgField *field)
 {
     switch (field->type) {
         case TYPE_MSG_HEADER:   return sizeof(Header);
@@ -886,7 +888,7 @@ static size_t get_element_size(MsgField *field)
     return 0;
 }
 
-static size_t get_prefix_size(Type type)
+size_t get_prefix_size(Type type)
 {
     switch (type) {
         case TYPE_MSG_HEADER:
@@ -913,7 +915,7 @@ static size_t get_prefix_size(Type type)
     return 0;
 }
 
-static int pack(const uint8_t *data, size_t data_size,
+int pack(const uint8_t *data, size_t data_size,
     uint8_t *buffer, size_t buff_size, MsgField *fields, size_t fields_count)
 {
 #pragma pack(push, 1)
@@ -987,7 +989,7 @@ static int pack(const uint8_t *data, size_t data_size,
                 memrcpy(wpos, rpos, bytes_to_write);
             #endif
 
-            readed  += static_elem_count * elem_size;
+            readed  += (int)(static_elem_count * elem_size);
             written += bytes_to_write;
         } else { // field.type == TYPE_NESTED_STRUCT
             assert(i + 1 < fields_count);
@@ -997,10 +999,10 @@ static int pack(const uint8_t *data, size_t data_size,
 
             for (size_t j = 0; j < packed_elem_count; j++) {
                 const uint8_t *d = data + readed;
-                int d_size = data_size - readed;
+                size_t d_size = data_size - readed;
 
                 uint8_t *b = buffer + written;
-                int b_size = buff_size - written;
+                size_t b_size = buff_size - written;
 
                 int tmp = pack(d, d_size, b, b_size, struct_fields, struct_fields_count);
                 if (tmp < 0) return -1;
@@ -1009,14 +1011,14 @@ static int pack(const uint8_t *data, size_t data_size,
             }
 
             // readed += field.size * remaining_count;
-            return written;
+            return (int)written;
         }
     }
 
-    return written;
+    return (int)written;
 }
 
-static int unpack(const uint8_t *data, size_t data_size, uint8_t *buffer,
+int unpack(const uint8_t *data, size_t data_size, uint8_t *buffer,
     size_t buff_size, MsgField *fields, size_t fields_count)
 {
 #pragma pack(push, 1)
@@ -1063,14 +1065,14 @@ static int unpack(const uint8_t *data, size_t data_size, uint8_t *buffer,
             static_elem_count = field.param;
             if (field.type == TYPE_STRING_16) {
                 // We want to ensure last character is null.
-                uint32_t end = MIN(field.param - 1, packed_elem_count);
+                uint32_t end = MIN(field.param - 1, (uint32_t)packed_elem_count);
                 s[end] = 0;
             } else {
                 written += sizeof(struct array);
-                a->size = packed_elem_count;
+                a->size = (uint32_t)packed_elem_count;
             }
             
-            readed += prefix_size;
+            readed += (int)prefix_size;
             // written += sizeof(array);
 
             rpos = data   + readed;
@@ -1093,19 +1095,19 @@ static int unpack(const uint8_t *data, size_t data_size, uint8_t *buffer,
                 memrcpy(wpos, rpos, bytes_to_read);
             #endif
 
-            readed  += bytes_to_read;
-            written += static_elem_count * elem_size;
+            readed  += (int)bytes_to_read;
+            written += (int)(static_elem_count * elem_size);
         } else { // field.type == TYPE_NESTED_STRUCT
             assert(i + 1 < fields_count);
             MsgField *next_fields = fields + i + 1;
-            int next_fields_count = fields_count - i - 1;
+            int next_fields_count = (int)(fields_count - i - 1);
 
             for (size_t j = 0; j < packed_elem_count; j++) {
                 const uint8_t *d = data + readed;
-                int d_size = data_size - readed;
+                int d_size = (int)data_size - readed;
 
                 uint8_t *b = buffer + written;
-                int b_size = buff_size - written;
+                int b_size = (int)buff_size - written;
 
                 int tmp = unpack(d, d_size, b, b_size, next_fields, next_fields_count);
                 if (tmp < 0) return -1;
@@ -1134,7 +1136,7 @@ void Sha1(const void *data, size_t size, char digest[20])
     W[4] = bswap32(W[4]);
 }
 
-static size_t unicode16_len(const uint16_t *s, size_t n)
+size_t unicode16_len(const uint16_t *s, size_t n)
 {
     size_t i;
     for (i = 0; i < n; i++) {
@@ -1144,7 +1146,7 @@ static size_t unicode16_len(const uint16_t *s, size_t n)
     return i;
 }
 
-static size_t unicode16_cpy(uint16_t *d, const uint16_t *s, size_t n)
+size_t unicode16_cpy(uint16_t *d, const uint16_t *s, size_t n)
 {
     size_t i;
     for (i = 0; i < n; i++) {

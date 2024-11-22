@@ -50,21 +50,17 @@ void remove_item_from_bag(Item *item)
     bag->item_count--;
 }
 
-Item *get_item_safe(GwClient *client, int32_t id)
+Item *get_item_safe(World *world, int32_t id)
 {
-    if (!(client->ingame && client->world.hash))
-        return NULL;
-    ArrayItem items = client->world.items;
+    ArrayItem items = world->items;
     if (!array_inside(&items, id))
         return NULL;
     return array_at(&items, id);
 }
 
-Bag *get_bag_safe(GwClient *client, BagEnum bag_id)
+Bag *get_bag_safe(World *world, BagEnum bag_id)
 {
-    if (!client->ingame)
-        return NULL;
-    return client->inventory.bags[bag_id];
+    return world->inventory.bags[bag_id];
 }
 
 void HandleItemStreamCreate(Connection *conn, size_t psize, Packet *packet)
@@ -120,7 +116,6 @@ void HandleItemGeneralInfo(Connection *conn, size_t psize, Packet *packet)
         /* +h009D */ uint32_t n_modifier;
         /* +h00A1 */ uint32_t modifier[64];
     } ItemInfo;
-
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_ITEM_GENERAL_INFO);
@@ -129,9 +124,10 @@ void HandleItemGeneralInfo(Connection *conn, size_t psize, Packet *packet)
     GwClient *client = cast(GwClient *)conn->data;
     ItemInfo *pack = cast(ItemInfo *)packet;
     assert(client && client->game_srv.secured);
+    World *world = get_world_or_abort(client);
     // LogInfo("ItemGeneralInfo {id: %d, modele: %d}", pack->item_id, pack->model);
 
-    ArrayItem *items = &client->world.items;
+    ArrayItem *items = &world->items;
     if (!array_inside(items, pack->item_id)) {
         array_resize(items, pack->item_id + 1);
         items->size = items->capacity;
@@ -171,9 +167,10 @@ void HandleItemRemove(Connection *conn, size_t psize, Packet *packet)
     GwClient *client = cast(GwClient *)conn->data;
     ItemRemove *pack = cast(ItemRemove *)packet;
     assert(client && client->game_srv.secured);
+    World *world = get_world_or_abort(client);
 
-    ArrayItem *items = &client->world.items;
-    Item *item = get_item_safe(client, pack->item_id);
+    ArrayItem *items = &world->items;
+    Item *item = get_item_safe(world, pack->item_id);
     if (!item) return;
 
     array_set(items, pack->item_id, NULL);
@@ -212,14 +209,15 @@ void HandleInventoryItemQuantity(Connection *conn, size_t psize, Packet *packet)
     } ItemQuantity;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_INVENTORY_ITEM_QUANTITY);
+    assert(packet->header == GAME_SMSG_ITEM_UPDATE_QUANTITY);
     assert(sizeof(ItemQuantity) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     ItemQuantity *pack = cast(ItemQuantity *)packet;
     assert(client && client->game_srv.secured);
 
-    Item *item = get_item_safe(client, pack->item_id);
+    World *world = get_world_or_abort(client);
+    Item *item = get_item_safe(world, pack->item_id);
     if (!item) {
         LogInfo("Updated item quantity of item %d, but the item doesn't exist.", pack->item_id);
         return;
@@ -240,26 +238,25 @@ void HandleInventoryItemLocation(Connection *conn, size_t psize, Packet *packet)
     } ItemLocation;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_INVENTORY_ITEM_LOCATION);
+    assert(packet->header == GAME_SMSG_ITEM_MOVED_TO_LOCATION);
     assert(sizeof(ItemLocation) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     ItemLocation *pack = cast(ItemLocation *)packet;
     assert(client && client->game_srv.secured);
+    World *world = get_world_or_abort(client);
 
 #if 0
     Item *item = get_item_safe(client, pack->item_id);
     if (!item) return;
 #else
-    if (!client->world.hash)
-        return;
-    ArrayItem items = client->world.items;
+    ArrayItem items = world->items;
     if (!(array_inside(&items, pack->item_id) && array_at(&items, pack->item_id)))
         return;
     Item *item = array_at(&items, pack->item_id);
 #endif
 
-    BagArray *bags = &client->world.bags;
+    BagArray *bags = &world->bags;
     uint32_t hash = hash_int32(pack->bag_id);
     uint32_t index = hash % bags->size;
     Bag *bag = &array_at(bags, index);
@@ -302,8 +299,10 @@ void HandleInventoryCreateBag(Connection *conn, size_t psize, Packet *packet)
 
     GwClient *client = cast(GwClient *)conn->data;
     BagInfo *pack = cast(BagInfo *)packet;
+    assert(client && client->game_srv.secured);
+    World *world = get_world_or_abort(client);
 
-    BagArray *bags = &client->world.bags;
+    BagArray *bags = &world->bags;
     uint32_t hash = hash_int32(pack->bag_id);
     uint32_t index = hash % bags->size;
     Bag *bag = &array_at(bags, index);
@@ -322,8 +321,137 @@ void HandleInventoryCreateBag(Connection *conn, size_t psize, Packet *packet)
     array_resize(&bag->items, pack->slot_count);
 
     assert(pack->bag_model_id < BagEnum_Count);
-    client->inventory.bags[pack->bag_model_id] = bag;
+    world->inventory.bags[pack->bag_model_id] = bag;
 }
+
+void HandleRequestSellableItems(GwClient* client, TransactionType type, uint32_t item_type, uint32_t item_amount) {
+
+    World* world = get_world_or_abort(client);
+
+    // Buy items received; ask for sellable items
+
+    if (type != TransactionType_TraderSell)
+        return;
+
+    QuoteInfo give;
+    memset(&give, 0, sizeof(give));
+    QuoteInfo recv;
+    memset(&recv, 0, sizeof(recv));
+
+    Bag* bag_ptr;
+    Bag* bags[] = {
+        world->inventory.backpack,
+        world->inventory.bag1,
+        world->inventory.bag2,
+        world->inventory.beltpouch
+    };
+
+    for (size_t i = 0; i < sizeof(bags) / sizeof(*bags); i++) {
+        bag_ptr = bags[i];
+        if (!bag_ptr && bag_ptr->item_count)
+            continue;
+        Item** item;
+        array_foreach(item, &bag_ptr->items) {
+            if (!*item) continue;
+            if ((*item)->quantity < item_amount)
+                continue;
+            if (item_type == 10) {
+                // Dyes
+                if ((*item)->type != 10)
+                    continue;
+            }
+            else if (item_type == 11) {
+                // Common materials
+                if ((*item)->type != 11)
+                    continue;
+                bool is_common_material = false;
+                uint32_t* mod_struct;
+                array_foreach(mod_struct, &(*item)->mod_struct) {
+                    uint16_t mod_id = ((*mod_struct) & 0xffff0000) >> 16;
+                    if (mod_id == 0x2508) {
+                        uint8_t mat_slot = (((*mod_struct) & 0x0000ff00) >> 8);
+                        is_common_material = mat_slot < 12;
+                        break;
+                    }
+                }
+                if (!is_common_material)
+                    continue;
+            }
+            else if (item_type == 258) {
+                // Rare materials
+                if ((*item)->type != 11)
+                    continue;
+                bool is_rare_material = false;
+                uint32_t* mod_struct;
+                array_foreach(mod_struct, &(*item)->mod_struct) {
+                    uint16_t mod_id = ((*mod_struct) & 0xffff0000) >> 16;
+                    if (mod_id == 0x2508) {
+                        uint8_t mat_slot = (((*mod_struct) & 0x0000ff00) >> 8);
+                        is_rare_material = mat_slot > 11 && mat_slot < 38;
+                        break;
+                    }
+                }
+                if (!is_rare_material)
+                    continue;
+            }
+            else if (item_type == 257) {
+                // Runes/Insignias
+                if ((*item)->type != 8)
+                    continue;
+                bool attaches_to_armor = false;
+                uint32_t* mod_struct;
+                array_foreach(mod_struct, &(*item)->mod_struct) {
+                    if (*mod_struct == 0x25b80000) {
+                        attaches_to_armor = true;
+                        break;
+                    }
+                }
+                if (!attaches_to_armor)
+                    continue;
+            }
+            else {
+                continue; // Other types not supported
+            }
+            if (give.item_count == sizeof(give.item_ids) / sizeof(*give.item_ids)) {
+                world->tmp_merchant_pending_sell_preview++;
+                GameSrv_RequestQuote(client, type, &give, &recv, true);
+                memset(&give, 0, sizeof(give));
+            }
+            give.item_ids[give.item_count] = (*item)->item_id;
+            give.item_count++;
+        }
+    }
+    if (give.item_count) {
+        world->tmp_merchant_pending_sell_preview++;
+        GameSrv_RequestQuote(client, type, &give, &recv, true);
+    }
+}
+
+void HandleMerchantReady(GwClient* client)
+{
+    World* world = get_world_or_abort(client);
+
+    world->tmp_merchant_pending_sell_preview = 0;
+
+    Item* item;
+    LogInfo("HandleMerchantReady called for %d items", world->tmp_merchant_items.size);
+    thread_mutex_lock(&client->mutex);
+    for (size_t i = 0; i < world->tmp_merchant_items.size; i++) {
+        array_add(&world->merchant_items, world->tmp_merchant_items.data[i]);
+        if (array_inside(&world->tmp_merchant_prices, i)) {
+            item = world->tmp_merchant_items.data[i];
+            // GW Bug: last sale price can be LOWER than the default item value!
+            if (item->value < world->tmp_merchant_prices.data[i])
+                item->value = world->tmp_merchant_prices.data[i];
+        }
+    }
+    thread_mutex_unlock(&client->mutex);
+    Event event;
+    Event_Init(&event, EventType_DialogOpen);
+    event.DialogOpen.sender_agent_id = world->merchant_agent_id;
+    broadcast_event(&client->event_mgr, &event);
+}
+
 void HandleWindowItemStreamEnd(Connection* conn, size_t psize, Packet* packet) {
     #pragma pack(push, 1)
         typedef struct {
@@ -338,14 +466,26 @@ void HandleWindowItemStreamEnd(Connection* conn, size_t psize, Packet* packet) {
     GwClient* client = cast(GwClient*)conn->data;
     assert(client && client->game_srv.secured);
 
-    HandleMerchantReady(client);
+    ItemStreamEnd* pack = cast(ItemStreamEnd*)packet;
+
+    LogInfo("HandleWindowItemStreamEnd, %d\n", pack->type);
+
+    World* world = get_world_or_abort(client);
+
+    if (pack->type == TransactionType_TraderSell) {
+        // Sellable items received
+        world->tmp_merchant_pending_sell_preview--;
+    }
+    if (world->tmp_merchant_pending_sell_preview == 0)
+        HandleMerchantReady(client);
 }
+
 void HandleWindowMerchant(Connection* conn, size_t psize, Packet* packet) {
     #pragma pack(push, 1)
         typedef struct {
             Header header;
-            uint8_t type;
-            uint32_t unk;
+            uint8_t type; // TransactionType
+            uint32_t item_type;
         } WindowMerchant;
     #pragma pack(pop)
 
@@ -356,11 +496,40 @@ void HandleWindowMerchant(Connection* conn, size_t psize, Packet* packet) {
     WindowMerchant* pack = cast(WindowMerchant*)packet;
     assert(client&& client->game_srv.secured);
 
-    if (pack->type == 11 && !pack->unk) {
+    World* world = get_world_or_abort(client);
+
+    if (pack->type == TransactionType_MerchantSell && !pack->item_type) {
         // Special case for merchant; only receives list of buyable items (i.e. no WindowPricesEnd packet; GW client figures out the sell tab)
         HandleMerchantReady(client);
     }
 }
+
+void HandleWindowTrader(Connection* conn, size_t psize, Packet* packet) {
+#pragma pack(push, 1)
+    typedef struct {
+        Header header;
+        uint8_t type; // TransactionType
+        uint32_t item_type;
+        uint8_t item_amount;
+        uint8_t h000d;
+    } WindowTrader;
+#pragma pack(pop)
+
+    assert(packet->header == GAME_SMSG_WINDOW_TRADER);
+    assert(sizeof(WindowTrader) == psize);
+
+    GwClient* client = cast(GwClient*)conn->data;
+    WindowTrader* pack = cast(WindowTrader*)packet;
+    assert(client && client->game_srv.secured);
+
+    HandleRequestSellableItems(client, cast(TransactionType)pack->type, pack->item_type, pack->item_amount);
+
+    if (pack->type == TransactionType_MerchantSell && !pack->item_type) {
+        // Special case for merchant; only receives list of buyable items (i.e. no WindowPricesEnd packet; GW client figures out the sell tab)
+        HandleMerchantReady(client);
+    }
+}
+
 void HandleWindowOwner(Connection *conn, size_t psize, Packet *packet)
 {
 #pragma pack(push, 1)
@@ -377,33 +546,15 @@ void HandleWindowOwner(Connection *conn, size_t psize, Packet *packet)
     WindowOwner *pack = cast(WindowOwner *)packet;
     assert(client && client->game_srv.secured);
 
-    array_clear(&client->merchant_items);
-    array_clear(&client->tmp_merchant_items);
-    array_clear(&client->tmp_merchant_prices);
-    client->merchant_agent_id = pack->agent_id;
-    client->interact_with = pack->agent_id;
+    World *world = get_world_or_abort(client);
+    array_clear(&world->merchant_items);
+    array_clear(&world->tmp_merchant_items);
+    array_clear(&world->tmp_merchant_prices);
+    world->merchant_agent_id = pack->agent_id;
+    world->interact_with = pack->agent_id;
     Event event;
     Event_Init(&event, EventType_DialogOpen);
     event.DialogOpen.sender_agent_id = pack->agent_id;
-    broadcast_event(&client->event_mgr, &event);
-}
-void HandleMerchantReady(GwClient* client) {
-    Item* item;
-    LogInfo("HandleMerchantReady called for %d items", client->tmp_merchant_items.size);
-    thread_mutex_lock(&client->mutex);
-    for (size_t i = 0; i < client->tmp_merchant_items.size; i++) {
-        array_add(&client->merchant_items, client->tmp_merchant_items.data[i]);
-        if (array_inside(&client->tmp_merchant_prices, i)) {
-            item = client->tmp_merchant_items.data[i];
-            // GW Bug: last sale price can be LOWER than the default item value!
-            if(item->value < client->tmp_merchant_prices.data[i])
-                item->value = client->tmp_merchant_prices.data[i];
-        }
-    }
-    thread_mutex_unlock(&client->mutex);
-    Event event;
-    Event_Init(&event, EventType_DialogOpen);
-    event.DialogOpen.sender_agent_id = client->merchant_agent_id;
     broadcast_event(&client->event_mgr, &event);
 }
 
@@ -424,8 +575,9 @@ void HandleWindowAddItems(Connection *conn, size_t psize, Packet *packet)
     AddItems *pack = cast(AddItems *)packet;
     assert(client && client->game_srv.secured);
 
-    ArrayItem *items = &client->world.items;
-    ArrayItem *merchant_items = &client->tmp_merchant_items;
+    World *world = get_world_or_abort(client);
+    ArrayItem *items = &world->items;
+    ArrayItem *merchant_items = &world->tmp_merchant_items;
 
     for (size_t i = 0; i < pack->n_items; i++) {
         int32_t item_id = pack->items[i];
@@ -459,9 +611,10 @@ void HandleWindowAddPrices(Connection* conn, size_t psize, Packet* packet)
 
     GwClient* client = cast(GwClient*)conn->data;
     AddPrices* pack = cast(AddPrices*)packet;
-    assert(client&& client->game_srv.secured);
+    assert(client && client->game_srv.secured);
 
-    array_uint32_t* merchant_prices = &client->tmp_merchant_prices;
+    World *world = get_world_or_abort(client);
+    array_uint32_t *merchant_prices = &world->tmp_merchant_prices;
     for (size_t i = 0; i < pack->n_prices; i++) {
         array_add(merchant_prices, pack->prices[i]);
     }
@@ -483,8 +636,9 @@ void HandleItemPriceQuote(Connection *conn, size_t psize, Packet *packet)
     GwClient *client = cast(GwClient *)conn->data;
     PriceQuote *pack = cast(PriceQuote *)packet;
     assert(client && client->game_srv.secured);
+    World *world = get_world_or_abort(client);
 
-    ArrayItem *items = &client->world.items;
+    ArrayItem *items = &world->items;
     assert(array_inside(items, pack->item_id));
     assert(array_at(items, pack->item_id));
     Item *item = array_at(items, pack->item_id);
@@ -502,7 +656,7 @@ void HandleItemChangeLocation(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(push, 1)
     typedef struct {
         Header  header;
-        int16_t unk1;
+        int16_t stream_id;
         int32_t item_id;
         int16_t bag_id;
         int8_t  slot;
@@ -516,13 +670,14 @@ void HandleItemChangeLocation(Connection *conn, size_t psize, Packet *packet)
     ChangeLocation *pack = cast(ChangeLocation *)packet;
     assert(client && client->game_srv.secured);
 
-    Item *item = get_item_safe(client, pack->item_id);
+    World *world = get_world_or_abort(client);
+    Item *item = get_item_safe(world, pack->item_id);
     if (!item) {
         LogError("HandleItemChangeLocation: Couldn't find item %d", pack->item_id);
         return;
     }
 
-    BagArray *bags = &client->world.bags;
+    BagArray *bags = &world->bags;
     uint32_t hash = hash_int32(pack->bag_id);
     uint32_t index = hash % bags->size;
     Bag *bag = &array_at(bags, index);
@@ -609,7 +764,8 @@ void GameSrv_StartSalvage(GwClient *client, Item *kit, Item *item)
 #pragma pack(pop)
 
     assert(client && client->game_srv.secured);
-    SalvageSession *session = &client->salvage_session;
+    World *world = get_world_or_abort(client);
+    SalvageSession *session = &world->salvage_session;
 
     SalvagePacket packet = NewPacket(GAME_CMSG_ITEM_SALVAGE_SESSION_OPEN);
     packet.session_id = session->salvage_session_id = 21; // @fixme only true for first player in guild hall - client will get disconnected if it's wrong
@@ -624,7 +780,8 @@ void GameSrv_StartSalvage(GwClient *client, Item *kit, Item *item)
 void GameSrv_CancelSalvage(GwClient *client)
 {
     assert(client && client->game_srv.secured);
-    SalvageSession *session = &client->salvage_session;
+    World *world = get_world_or_abort(client);
+    SalvageSession *session = &world->salvage_session;
     if (!session->is_open) return;
 
     Packet packet = NewPacket(GAME_CMSG_ITEM_SALVAGE_SESSION_CANCEL);
@@ -655,7 +812,8 @@ void GameSrv_SalvageUpgrade(GwClient *client, size_t index)
 #pragma pack(pop)
 
     assert(client && client->game_srv.secured);
-    SalvageSession *session = &client->salvage_session;
+    World *world = get_world_or_abort(client);
+    SalvageSession *session = &world->salvage_session;
     if (index >= session->n_upgrades) {
         LogError("The maximum upgrade index is %u, but you entered %u", session->n_upgrades, index);
         return;
@@ -684,7 +842,8 @@ void HandleSalvageSessionStart(Connection *conn, size_t psize, Packet *packet)
     GwClient *client = cast(GwClient *)conn->data;
     SalvagePacket *pack = cast(SalvagePacket *)packet;
     assert(client && client->game_srv.secured);
-    SalvageSession *session = &client->salvage_session;
+    World *world = get_world_or_abort(client);
+    SalvageSession *session = &world->salvage_session;
 
     if (pack->salvage_session_id != session->salvage_session_id) {
         LogError("salvage_session_id mismatch {received: %d, expected: %d}",
@@ -695,7 +854,7 @@ void HandleSalvageSessionStart(Connection *conn, size_t psize, Packet *packet)
     session->n_upgrades = pack->n_upgrades;
     for (size_t i = 0; i < session->n_upgrades; i++) {
         uint32_t item_id = pack->upgrades[i];
-        session->upgrades[i] = get_item_safe(client, item_id);
+        session->upgrades[i] = get_item_safe(world, item_id);
     }
     session->is_open = true;
 
@@ -715,7 +874,8 @@ void HandleSalvageSessionCancel(Connection *conn, size_t psize, Packet *packet)
     GwClient *client = cast(GwClient *)conn->data;
     assert(client && client->game_srv.secured);
 
-    SalvageSession *session = &client->salvage_session;
+    World *world = get_world_or_abort(client);
+    SalvageSession *session = &world->salvage_session;
     session->is_open = false;
     session->n_upgrades = 0;
 }
@@ -727,7 +887,8 @@ void HandleSalvageSessionDone(Connection* conn, size_t psize, Packet* packet)
 
     GwClient* client = cast(GwClient*)conn->data;
     assert(client && client->game_srv.secured);
-    SalvageSession* session = &client->salvage_session;
+    World *world = get_world_or_abort(client);
+    SalvageSession* session = &world->salvage_session;
 
     session->is_open = false;
     session->n_upgrades = 0;

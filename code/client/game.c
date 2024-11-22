@@ -3,14 +3,14 @@
 #endif
 #define CORE_GAME_C
 
-static void HandlePingRequest(Connection *conn, size_t psize, Packet *packet)
+void HandlePingRequest(Connection *conn, size_t psize, Packet *packet)
 {
     assert(packet->header == GAME_SMSG_PING_REQUEST);
     assert(sizeof(Header) == psize);
     GameSrv_PingReply(conn);
 }
 
-static void HandlePingReply(Connection *conn, size_t psize, Packet *packet)
+void HandlePingReply(Connection *conn, size_t psize, Packet *packet)
 {
 #pragma pack(push, 1)
     typedef struct {
@@ -26,17 +26,22 @@ static void HandlePingReply(Connection *conn, size_t psize, Packet *packet)
     PingReply *pack = cast(PingReply *)packet;
     (void)pack;
 
+    
     // @Remark:
     // In PingReply packet we send/receive the "reaction" of our code
     // (i.e. the time in ms that it take to start receiving new input)
     // So the actual ping (from send to recv) should be between
     // [latency/2 - srv->reaction - clt->reaction, latency/2 + srv->reaction + clt->reaction]
-    conn->pong = client->world.world_time;
-    conn->latency = conn->pong - conn->ping;
+    World* world = get_world(client);
+    if (world) {
+        conn->pong = world->world_time;
+        conn->latency = conn->pong - conn->ping;
+    }
+
     // printf("latency %lu, pack {ping: %d}\n", conn->latency, pack->ping);
 }
 
-static void HandleAccountCurrency(Connection *conn, size_t psize, Packet *packet)
+void HandleAccountCurrency(Connection *conn, size_t psize, Packet *packet)
 {
 #pragma pack(push, 1)
     typedef struct {
@@ -47,7 +52,7 @@ static void HandleAccountCurrency(Connection *conn, size_t psize, Packet *packet
     } AccountCurrency;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_ACCOUNT_CURRENCY);
+    assert(packet->header == GAME_SMSG_ACCOUNT_FEATURE);
     assert(sizeof(AccountCurrency) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
@@ -56,7 +61,7 @@ static void HandleAccountCurrency(Connection *conn, size_t psize, Packet *packet
     (void)pack;
 }
 
-static void HandleUpdateActiveWeaponSet(Connection *conn, size_t psize, Packet *packet)
+void HandleUpdateActiveWeaponSet(Connection *conn, size_t psize, Packet *packet)
 {
 #pragma pack(push, 1)
     typedef struct {
@@ -76,7 +81,7 @@ static void HandleUpdateActiveWeaponSet(Connection *conn, size_t psize, Packet *
     // LogInfo("UpdateActiveWeapon {slot: %d}", pack->slot);
 }
 
-static void HandleGoldCharacterAdd(Connection *conn, size_t psize, Packet *packet)
+void HandleGoldCharacterAdd(Connection *conn, size_t psize, Packet *packet)
 {
 #pragma pack(push, 1)
     typedef struct {
@@ -86,17 +91,18 @@ static void HandleGoldCharacterAdd(Connection *conn, size_t psize, Packet *packe
     } AddGold;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_GOLD_CHARACTER_ADD);
+    assert(packet->header == GAME_SMSG_UPDATE_GOLD_CHARACTER);
     assert(sizeof(AddGold) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     AddGold *pack = cast(AddGold *)packet;
     assert(client && client->game_srv.secured);
 
-    client->inventory.gold_character += pack->gold;
+    World *world = get_world_or_abort(client);
+    world->inventory.gold_character += pack->gold;
 }
 
-static void HandleGoldStorageAdd(Connection *conn, size_t psize, Packet *packet)
+void HandleGoldStorageAdd(Connection *conn, size_t psize, Packet *packet)
 {
 #pragma pack(push, 1)
     typedef struct {
@@ -106,14 +112,15 @@ static void HandleGoldStorageAdd(Connection *conn, size_t psize, Packet *packet)
     } UpdateGold;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_GOLD_STORAGE_ADD);
+    assert(packet->header == GAME_SMSG_UPDATE_GOLD_STORAGE);
     assert(sizeof(UpdateGold) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
     UpdateGold *pack = cast(UpdateGold *)packet;
     assert(client && client->game_srv.secured);
 
-    client->inventory.gold_storage += pack->gold;
+    World *world = get_world_or_abort(client);
+    world->inventory.gold_storage += pack->gold;
 }
 
 void HandleReadyForMapSpawn(Connection *conn, size_t psize, Packet *packet)
@@ -145,10 +152,11 @@ void HandleGoldCharacterRemove(Connection *conn, size_t psize, Packet *packet)
     RemoveGold *pack = cast(RemoveGold *)packet;
     assert(client && client->game_srv.secured);
 
-    client->inventory.gold_character -= pack->gold;
+    World *world = get_world_or_abort(client);
+    world->inventory.gold_character -= pack->gold;
 }
 
-static void HandleGoldStorageRemove(Connection *conn, size_t psize, Packet *packet)
+void HandleGoldStorageRemove(Connection *conn, size_t psize, Packet *packet)
 {
 #pragma pack(push, 1)
     typedef struct {
@@ -165,10 +173,11 @@ static void HandleGoldStorageRemove(Connection *conn, size_t psize, Packet *pack
     RemoveGold *pack = cast(RemoveGold *)packet;
     assert(client && client->game_srv.secured);
 
-    client->inventory.gold_storage -= pack->gold;
+    World *world = get_world_or_abort(client);
+    world->inventory.gold_storage -= pack->gold;
 }
 
-static void InstanceLoad_RequestData(Connection *conn)
+void InstanceLoad_RequestData(Connection *conn)
 {
 #pragma pack(push, 1)
     typedef struct {
@@ -241,7 +250,7 @@ void HandleInstanceLoadInfo(Connection *conn, size_t psize, Packet *packet)
     InstanceInfo *pack = cast(InstanceInfo *)packet;
     assert(client && client->game_srv.secured);
 
-    World *world = &client->world;
+    World *world = get_world_or_abort(client);
     world->map_id = pack->map_id;
     world->district = pack->district;
     world->language = (DistrictLanguage)pack->language;
@@ -295,7 +304,7 @@ void HandleCinematicSkipEveryone(Connection *conn, size_t psize, Packet *packet)
     GwClient *client = cast(GwClient *)conn->data;
     assert(client && client->game_srv.secured);
 
-    World *world = &client->world;
+    World *world = get_world_or_abort(client);
     world->cinematic_skip_count = world->cinematic_member_count;
 }
 
@@ -315,9 +324,10 @@ void HandleCinematicSkipCount(Connection *conn, size_t psize, Packet *packet)
     GwClient *client = cast(GwClient *)conn->data;
     SkipCount *pack = cast(SkipCount *)packet;
     assert(client && client->game_srv.secured);
+    World *world = get_world_or_abort(client);
 
-    client->world.cinematic_skip_count = pack->skip_count;
-    client->world.cinematic_member_count = pack->member_count;
+    world->cinematic_skip_count = pack->skip_count;
+    world->cinematic_member_count = pack->member_count;
 }
 
 void HandleCinematicStart(Connection *conn, size_t psize, Packet *packet)
@@ -335,8 +345,9 @@ void HandleCinematicStart(Connection *conn, size_t psize, Packet *packet)
     GwClient *client = cast(GwClient *)conn->data;
     CinematicStart *pack = cast(CinematicStart *)packet;
     assert(client && client->game_srv.secured);
+    World *world = get_world_or_abort(client);
 
-    client->world.in_cinematic = true;
+    world->in_cinematic = true;
     if (pack->start) {
         Event event;
         Event_Init(&event, EventType_CinematicPlay);
@@ -378,7 +389,8 @@ void HandleCinematicEnd(Connection *conn, size_t psize, Packet *packet)
     GwClient *client = cast(GwClient *)conn->data;
     assert(client && client->game_srv.secured);
 
-    client->world.in_cinematic = false;
+    World *world = get_world_or_abort(client);
+    world->in_cinematic = false;
 }
 
 void HandleInstanceShowWin(Connection *conn, size_t psize, Packet *packet)
@@ -405,8 +417,9 @@ void HandleMissionAddGoal(Connection *conn, size_t psize, Packet *packet)
 
     GwClient *client = cast(GwClient *)conn->data;
     assert(client && client->game_srv.secured);
+    World *world = get_world_or_abort(client);
 
-    client->world.objective_count += 1;
+    world->objective_count += 1;
 }
 void HandleFriendListMessage(Connection* conn, size_t psize, Packet* packet)
 {
@@ -505,14 +518,14 @@ void GameSrv_RegisterCallbacks(Connection *conn)
     handlers[GAME_SMSG_INSTANCE_LOADED]                 = HandleInstanceLoaded;
     handlers[GAME_SMSG_FRIENDLIST_MESSAGE]              = HandleFriendListMessage;
 
-    handlers[GAME_SMSG_GOLD_CHARACTER_ADD]              = HandleGoldCharacterAdd;
-    handlers[GAME_SMSG_GOLD_STORAGE_ADD]                = HandleGoldStorageAdd;
+    handlers[GAME_SMSG_UPDATE_GOLD_CHARACTER]           = HandleGoldCharacterAdd;
+    handlers[GAME_SMSG_UPDATE_GOLD_STORAGE]             = HandleGoldStorageAdd;
     handlers[GAME_SMSG_GOLD_CHARACTER_REMOVE]           = HandleGoldCharacterRemove;
     handlers[GAME_SMSG_GOLD_STORAGE_REMOVE]             = HandleGoldStorageRemove;
 
     // items
-    handlers[GAME_SMSG_INVENTORY_ITEM_QUANTITY]         = HandleInventoryItemQuantity;
-    handlers[GAME_SMSG_INVENTORY_ITEM_LOCATION]         = HandleInventoryItemLocation;
+    handlers[GAME_SMSG_ITEM_UPDATE_QUANTITY]            = HandleInventoryItemQuantity;
+    handlers[GAME_SMSG_ITEM_MOVED_TO_LOCATION]          = HandleInventoryItemLocation;
     handlers[GAME_SMSG_INVENTORY_CREATE_BAG]            = HandleInventoryCreateBag;
     handlers[GAME_SMSG_ITEM_STREAM_CREATE]              = HandleItemStreamCreate;
     handlers[GAME_SMSG_ITEM_STREAM_DESTROY]             = HandleItemStreamDestroy;
@@ -527,6 +540,7 @@ void GameSrv_RegisterCallbacks(Connection *conn)
     handlers[GAME_SMSG_WINDOW_OWNER]                    = HandleWindowOwner;
     handlers[GAME_SMSG_WINDOW_ADD_ITEMS]                = HandleWindowAddItems;
     handlers[GAME_SMSG_ITEM_PRICES]                     = HandleWindowAddPrices;
+    handlers[GAME_SMSG_WINDOW_TRADER]                   = HandleWindowTrader;
 
     // salvage
     handlers[GAME_SMSG_ITEM_SALVAGE_SESSION_START]      = HandleSalvageSessionStart;
@@ -549,7 +563,7 @@ void GameSrv_RegisterCallbacks(Connection *conn)
     handlers[GAME_SMSG_AGENT_UPDATE_POSITION]           = HandleAgentUpdatePosition;
     handlers[GAME_SMSG_AGENT_UPDATE_ROTATION]           = HandleAgentUpdateRotation;
     handlers[GAME_SMSG_AGENT_UPDATE_DESTINATION]        = HandleAgentUpdateDestination;
-    handlers[GAME_SMSG_AGENT_CREATE_PLAYER]             = HandleAgentCreatePlayer;
+    handlers[GAME_SMSG_UPDATE_PLAYER_INFO]              = HandleUpdatePlayerInfo;
     handlers[GAME_SMSG_AGENT_DESTROY_PLAYER]            = HandleAgentDestroyPlayer;
     
     handlers[GAME_SMSG_AGENT_CREATE_NPC]                = HandleAgentCreateNPC;
@@ -593,13 +607,13 @@ void GameSrv_RegisterCallbacks(Connection *conn)
     handlers[GAME_SMSG_CHAT_MESSAGE_SERVER]             = HandleChatMessageServer;
 
     // players
-    handlers[GAME_SMSG_PLAYER_ATTR_SET]                 = HandlePlayerAttrSet;
-    handlers[GAME_SMSG_PLAYER_ATTR_MAX_KURZICK]         = HandlePlayerAttrMaxKurzick;
-    handlers[GAME_SMSG_PLAYER_ATTR_MAX_LUXON]           = HandlePlayerAttrMaxLuxon;
-    handlers[GAME_SMSG_PLAYER_ATTR_MAX_BALTHAZAR]       = HandlePlayerAttrMaxBalthazar;
-    handlers[GAME_SMSG_PLAYER_ATTR_MAX_IMPERIAL]        = HandlePlayerAttrMaxImperial;
-    handlers[GAME_SMSG_PLAYER_ATTR_UPDATE]              = HandlePlayerAttrUpdate;
-
+    handlers[GAME_SMSG_PLAYER_UPDATE_FACTIONS]          = HandlePlayerUpdateFactions;
+    handlers[GAME_SMSG_PLAYER_FACTION_MAX_KURZICK]      = HandlePlayerFactionMaxKurzick;
+    handlers[GAME_SMSG_PLAYER_FACTION_MAX_LUXON]        = HandlePlayerFactionMaxLuxon;
+    handlers[GAME_SMSG_PLAYER_FACTION_MAX_BALTHAZAR]    = HandlePlayerFactionMaxBalthazar;
+    handlers[GAME_SMSG_PLAYER_FACTION_MAX_IMPERIAL]     = HandlePlayerFactionMaxImperial;
+    handlers[GAME_SMSG_PLAYER_FACTION_UPDATE]           = HandlePlayerFactionUpdate;
+    handlers[GAME_SMSG_MAPS_UNLOCKED]                   = HandlePlayerUnlockedAreas;
     // skills
     handlers[GAME_SMSG_SKILLBAR_UPDATE_SKILL]           = HandleSkillbarUpdateSkill;
     handlers[GAME_SMSG_SKILLBAR_UPDATE]                 = HandleSkillbarUpdate;
@@ -612,11 +626,11 @@ void GameSrv_RegisterCallbacks(Connection *conn)
     handlers[GAME_SMSG_HERO_BEHAVIOR]                   = HandleHeroBehavior;
     handlers[GAME_SMSG_HERO_SKILL_STATUS]               = HandleHeroSkillStatus;
     handlers[GAME_SMSG_HERO_SKILL_STATUS_BITMAP]        = HandleHeroSkillStatusBitmap;
-    handlers[GAME_SMSG_AGENT_UPDATE_ATTRIBUTE]          = HandleAgentUpdateAttribute;
+    handlers[GAME_SMSG_AGENT_UPDATE_ATTRIBUTES]         = HandleAgentUpdateAttributes;
 
     // quests
     handlers[GAME_SMSG_QUEST_DESCRIPTION]               = HandleQuestDescription;
-    handlers[GAME_SMSG_QUEST_ADD]                       = HandleQuestAdd;
+    handlers[GAME_SMSG_QUEST_GENERAL_INFO]              = HandleQuestGeneralInfo;
     handlers[GAME_SMSG_QUEST_UPDATE_MARKER]             = HandleQuestUpdateMarker;
     handlers[GAME_SMSG_QUEST_REMOVE]                    = HandleQuestRemove;
 
@@ -655,6 +669,7 @@ void GameSrv_RegisterCallbacks(Connection *conn)
     handlers[GAME_SMSG_EFFECT_REMOVED]                  = HandleEffectRemoved;
 
     // parties
+    handlers[GAME_SMSG_UPDATE_AGENT_PARTYSIZE]          = HandleAgentPartySize;
     handlers[GAME_SMSG_PARTY_SET_DIFFICULTY]            = HandlePartySetDifficulty;
     handlers[GAME_SMSG_PARTY_HERO_ADD]                  = HandlePartyHeroAdd;
     handlers[GAME_SMSG_PARTY_HERO_REMOVE]               = HandlePartyHeroRemove;
@@ -722,7 +737,9 @@ void GameSrv_PingReply(Connection *conn)
 void GameSrv_PingRequest(Connection *conn)
 {
     GwClient *client = cast(GwClient *)conn->data;
-    conn->ping = client->world.world_time;
+    World *world = get_world(client);
+    if (world)
+        conn->ping = world->world_time;
 
     Packet packet = NewPacket(GAME_CMSG_PING_REQUEST);
     SendPacket(conn, sizeof(packet), &packet);

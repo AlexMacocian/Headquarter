@@ -4,12 +4,12 @@
 #define COMMAND_C_INC
 
 CommandOptions options;
-int parsed_argc;
-char** parsed_argv;
+int    g_Argc;
+char** g_Argv;
 
 void print_help(bool terminate)
 {
-    printf("Usage: [options] <script>\n"
+    printf("Usage: [options] <script> [--] [more_options]\n"
 
         "    --version                  print version and exist\n"
         "    -c <config_file>           use config_file as configuration file\n"
@@ -38,7 +38,7 @@ void print_help(bool terminate)
     if (terminate) exit(0);
 }
 
-void check_for_more_arguments(int argc, const char** argv, int i, int nargs)
+void check_for_more_arguments(int argc, char** argv, int i, int nargs)
 {
     if (argc <= i + nargs) {
         printf("Not enough arguments after '%s'\n", argv[i]);
@@ -46,15 +46,23 @@ void check_for_more_arguments(int argc, const char** argv, int i, int nargs)
     }
 }
 
-void parse_command_args(int argc, const char** argv)
+void parse_command_args(int argc, char **argv)
 {
     // @Remark: Currently, if the format is not valid, for instance -email with no
     // arguments following, we will print the help and exit. Maybe we just want
     // to returns with an error flag set.
-    parsed_argc = argc;
-    parsed_argv = argv;
+
     options.newauth = true;
     options.online_status = 1;
+
+    const char *ptr;
+    if ((ptr = getenv("HEADQUARTER_PASSWORD")) != NULL) {
+        safe_strcpy(options.password, ARRAY_SIZE(options.password), ptr);
+    }
+
+    if ((ptr = getenv("HEADQUARTER_2FA_SECRET")) != NULL) {
+        safe_strcpy(options.secret_2fa, ARRAY_SIZE(options.secret_2fa), ptr);
+    }
 
     for (int i = 0; i < argc; i++) {
         const char* arg = argv[i];
@@ -98,8 +106,10 @@ void parse_command_args(int argc, const char** argv)
         else if (!strcmp(arg, "-password")) {
             check_for_more_arguments(argc, argv, i, 1);
             safe_strcpy(options.password, ARRAY_SIZE(options.password), argv[++i]);
-        }
-        else if (!strcmp(arg, "-character")) {
+        } else if (!strcmp(arg, "-2fa-secret")) {
+            check_for_more_arguments(argc, argv, i, 1);
+            safe_strcpy(options.secret_2fa, ARRAY_SIZE(options.secret_2fa), argv[++i]);
+        } else if (!strcmp(arg, "-character")) {
             check_for_more_arguments(argc, argv, i, 1);
             safe_strcpy(options.charname, ARRAY_SIZE(options.charname), argv[++i]);
         }
@@ -123,8 +133,11 @@ void parse_command_args(int argc, const char** argv)
             check_for_more_arguments(argc, argv, i, 1);
             safe_strcpy(options.file_game_version, ARRAY_SIZE(options.file_game_version), argv[++i]);
         }
-        else if (!strncmp(arg, "-", 1)) {
-            i++;
+        else if (!strcmp(arg, "--")) {
+            ++i;
+            g_Argv = &argv[i];
+            g_Argc = argc - i;
+            break;
         }
         else {
             if (options.script) {
@@ -174,14 +187,8 @@ void parse_command_args(int argc, const char** argv)
     if (!options.file_game_version[0]) {
         // No version argument; use hard coded one
         options.game_version = GUILD_WARS_VERSION;
-    }
-    else if (atoi(options.file_game_version) > 0) {
-        // Version argument is numeric
-        options.game_version = (uint32_t)atoi(options.file_game_version);
-    }
-    else {
-        // Version argument may be a location on disk of a Gw.build file
-        FILE* file;
+    } else {
+        FILE *file;
         if ((file = fopen(options.file_game_version, "rb")) == NULL) {
             fprintf(stderr, "Failed to open '%s', err: %d\n", options.file_game_version, errno);
             abort();
@@ -205,12 +212,4 @@ void parse_command_args(int argc, const char** argv)
 
         options.game_version = (uint32_t)game_version;
     }
-}
-
-HQAPI int GetArgc() {
-    return parsed_argc;
-}
-
-HQAPI char** GetArgv() {
-    return parsed_argv;
 }

@@ -17,15 +17,11 @@ void init_client(GwClient *client)
     client->loading = true;
     client->connected = true;
 
-    array_init(&client->characters);
-    array_init(&client->merchant_items);
-    array_init(&client->trade_session.trader_items);
-    array_init(&client->trade_session.player_items);
-    array_init(&client->titles);
-    array_init(&client->friends);
-    array_init(&client->dialog.buttons);
+    client->current_character_idx = 0xffffffff;
 
-    array_resize(&client->titles, 64);
+    array_init(&client->characters);
+
+    array_init(&client->player_hero.maps_unlocked);
 
     init_chat(&client->chat);
 
@@ -33,10 +29,28 @@ void init_client(GwClient *client)
 
     init_event_manager(&client->event_mgr);
 
-    init_guildmember_update(client);
-
     init_connection(&client->auth_srv, client);
     init_connection(&client->game_srv, client);
+}
+
+World* get_world(GwClient *client)
+{
+    assert(client != NULL);
+    if (client->world.hash == 0) {
+        return NULL;
+    } else {
+        return &client->world;
+    }
+}
+
+World* get_world_or_abort(GwClient *client)
+{
+    assert(client != NULL);
+    if (client->world.hash == 0) {
+        abort();
+    } else {
+        return &client->world;
+    }
 }
 
 uint32_t issue_next_transaction(GwClient *client, AsyncType type)
@@ -64,6 +78,12 @@ struct area_info {
     Region region;
     RegionType region_type;
     uint32_t flags;
+    uint32_t x;
+    uint32_t y;
+    uint32_t start_x;
+    uint32_t start_y;
+    uint32_t end_x;
+    uint32_t end_y;
 };
 
 struct region_type_to_map_type {
@@ -71,7 +91,7 @@ struct region_type_to_map_type {
     RegionType region_type;
 };
 
-static uint32_t find_map_type_from_map_id(uint32_t map_id)
+uint32_t find_map_type_from_map_id(uint32_t map_id)
 {
     static const struct area_info area_info_table[] = {
         #include "data/area_info.data"
@@ -96,6 +116,15 @@ static uint32_t find_map_type_from_map_id(uint32_t map_id)
     abort();
 }
 
+Character* GetCharacter(GwClient *client, uint32_t char_id)
+{
+    if (client->characters.size <= char_id) {
+        return NULL;
+    } else {
+        return &client->characters.data[char_id];
+    }
+}
+
 void ContinueAccountLogin(GwClient *client, uint32_t error_code)
 {
     assert(client->state == AwaitAccountConnection);
@@ -108,7 +137,6 @@ void ContinueAccountLogin(GwClient *client, uint32_t error_code)
 
     uint32_t trans_id = issue_next_transaction(client, AsyncType_SendHardwareInfo);
     client->state = AwaitHardwareInfoReply;
-    AuthSrv_HardwareInfo(&client->auth_srv);
     AuthSrv_AskServerResponse(&client->auth_srv, trans_id);
 }
 
@@ -214,13 +242,13 @@ void ContinuePlayCharacter(GwClient *client, uint32_t error_code)
     // Character *cc = client->current_character; // can use to find the map
     uint32_t trans_id = issue_next_transaction(client, AsyncType_PlayCharacter);
     LogDebug("AuthSrv_RequestInstance: {trans_id: %lu}", trans_id);
-    client->state = AwaitGameServerInfo;
 
     uint32_t choosen_map_id;
     if (options.opt_map_id.set) {
         choosen_map_id = options.opt_map_id.map_id;
     } else {
-        choosen_map_id = client->current_character->map;
+        Character *ch = GetCharacter(client, client->current_character_idx);
+        choosen_map_id = ch ? ch->settings.last_outpost : 0;
     }
 
     uint32_t map_type;
@@ -236,27 +264,28 @@ void ContinuePlayCharacter(GwClient *client, uint32_t error_code)
 
 void ContinueChangeCharacter(GwClient *client, uint32_t error_code)
 {
-    assert(client->state == AwaitChangeCharacter && client->pending_character);
+    assert(client->state == AwaitChangeCharacter && client->pending_character_idx != 0);
 
     if (error_code != 0) {
         LogInfo("ContinueChangeCharacter failed (Code=%03d)", error_code);
         return;
     }
-    client->current_character = client->pending_character;
-    client->pending_character = NULL;
+    client->current_character_idx = client->pending_character_idx;
+    client->pending_character_idx = 0;
     client->state = AwaitPlayCharacter;
     PlayCharacter(client, NULL, 0);
 }
-// Returns true
-bool ChangeCharacter(GwClient* client, struct kstr* name) {
-    
-    Character *cc = client->current_character;
-    if (!(name && kstr_hdr_compare_kstr(&cc->name, name) != 0))
+
+bool ChangeCharacter(GwClient* client, struct kstr* name)
+{
+    Character* cc = GetCharacter(client, client->current_character_idx);
+    if (!(cc && name && kstr_hdr_compare_kstr(&cc->name, name) != 0))
         return false;
-    array_foreach(cc, &client->characters) {
-        if (kstr_hdr_compare_kstr(&cc->name, name) == 0) {
+    for (size_t idx = 0; idx < client->characters.size; ++idx) {
+        Character* ch = &client->characters.data[idx];
+        if (kstr_hdr_compare_kstr(&ch->name, name) == 0) {
             client->state = AwaitChangeCharacter;
-            client->pending_character = cc;
+            client->pending_character_idx = idx;
             uint32_t trans_id = issue_next_transaction(client, AsyncType_ChangeCharacter);
 
             LogDebug("AuthSrv_ChangeCharacter {trans_id: %lu}", trans_id);
@@ -264,7 +293,8 @@ bool ChangeCharacter(GwClient* client, struct kstr* name) {
             return true;
         }
     }
-    assert("Failed to find character matching required name" && false);
+
+    LogError("Failed to find character matching required name");
     return false;
 }
 void PlayCharacter(GwClient *client, struct kstr *name, PlayerStatus status)
@@ -286,10 +316,10 @@ void GameSrv_Disconnect(GwClient *client)
     assert(client && client->game_srv.secured);
 
     client->state = AwaitGameServerDisconnect;
-    NetConn_Shutdown(&client->game_srv);
 
     Packet packet = NewPacket(GAME_CMSG_DISCONNECT);
     SendPacket(&client->game_srv, sizeof(packet), &packet);
+    NetConn_Shutdown(&client->game_srv);
 }
 
 void GameSrv_LogoutToCharselect(GwClient *client)

@@ -3,17 +3,17 @@
 #endif
 #define CORE_MAIN_C
 
-static bool quit;
-static uint32_t fps;
+bool quit;
+uint32_t fps;
 GwClient *client;
 
-static void sighandler(int signum)
+void sighandler(int signum)
 {
     (void)signum;
     quit = true;
 }
 
-static void main_loop(void)
+void main_loop(void)
 {
     uint32_t frame_count = 0;
     struct timespec t0, t1;
@@ -95,7 +95,7 @@ static void main_loop(void)
     }
 }
 
-int main(int argc, const char *argv[])
+int main(int argc, char **argv)
 {
     parse_command_args(argc - 1, argv + 1);
 
@@ -152,8 +152,15 @@ int main(int argc, const char *argv[])
         kstr_read_ascii(&password, options.password, ARRAY_SIZE(options.password));
 
         if (options.newauth) {
+            const char *secret;
+            if (options.secret_2fa[0] == 0) {
+                secret = NULL;
+            } else {
+                secret = options.secret_2fa;
+            }
+
             struct portal_login_result result;
-            int ret = portal_login(&result, options.email, options.password);
+            int ret = portal_login(&result, options.email, options.password, secret);
             if (ret != 0) {
                 fprintf(stderr, "Failed to connect to portal\n");
                 return 1;
