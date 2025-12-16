@@ -38,7 +38,7 @@ void print_help(bool terminate)
     if (terminate) exit(0);
 }
 
-void check_for_more_arguments(int argc, const char **argv, int i, int nargs)
+void check_for_more_arguments(int argc, char **argv, int i, int nargs)
 {
     if (argc <= i + nargs) {
         printf("Not enough arguments after '%s'\n", argv[i]);
@@ -126,7 +126,7 @@ void parse_command_args(int argc, char **argv)
             break;
         } else {
             if (options.script) {
-                printf("You shouldn't specify more than one script to run\n");
+                printf("You shouldn't specify more than one script to run, '%s' already specified\n", options.script);
                 print_help(true);
             }
             options.script = arg;

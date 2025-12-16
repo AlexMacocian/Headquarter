@@ -217,6 +217,9 @@ if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
     endif(CMAKE_COMPILER_IS_GNU OR CMAKE_COMPILER_IS_CLANG)
 endif(CMAKE_BUILD_TYPE STREQUAL "Coverage")
 
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-error=documentation")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unused-but-set-variable")
+
 if(LIB_INSTALL_DIR)
 else()
     set(LIB_INSTALL_DIR lib)
