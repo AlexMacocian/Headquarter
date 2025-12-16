@@ -19,7 +19,7 @@ void print_help(bool terminate)
             "    -account   <string>        Name of the account to use\n"
             "    -email     <string>        Sets the client's email\n"
             "    -password  <string>        Enable auto-loging. use with -email and -charname\n"
-            "    -character <string>        Sets the client's security question\n"
+            "    -character <string>        Specify which character to play on\n"
             "    -status    <number>        Sets the login online status (0 = offline, 1 = online, 2 = busy, 3 = away)\n"
             "    -authsrv                   Specify authserver IP to connect to\n"
             "\n"
