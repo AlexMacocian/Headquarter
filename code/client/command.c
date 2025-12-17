@@ -19,7 +19,7 @@ void print_help(bool terminate)
             "    -account   <string>        Name of the account to use\n"
             "    -email     <string>        Sets the client's email\n"
             "    -password  <string>        Enable auto-loging. use with -email and -charname\n"
-            "    -character <string>        Sets the client's security question\n"
+            "    -character <string>        Specify which character to play on\n"
             "    -status    <number>        Sets the login online status (0 = offline, 1 = online, 2 = busy, 3 = away)\n"
             "    -authsrv                   Specify authserver IP to connect to\n"
             "\n"
@@ -38,7 +38,7 @@ void print_help(bool terminate)
     if (terminate) exit(0);
 }
 
-void check_for_more_arguments(int argc, const char **argv, int i, int nargs)
+void check_for_more_arguments(int argc, char **argv, int i, int nargs)
 {
     if (argc <= i + nargs) {
         printf("Not enough arguments after '%s'\n", argv[i]);
@@ -126,7 +126,7 @@ void parse_command_args(int argc, char **argv)
             break;
         } else {
             if (options.script) {
-                printf("You shouldn't specify more than one script to run\n");
+                printf("You shouldn't specify more than one script to run, '%s' already specified\n", options.script);
                 print_help(true);
             }
             options.script = arg;

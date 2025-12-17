@@ -105,7 +105,6 @@ void HandleItemRemove(Connection *conn, size_t psize, Packet *packet);
 void HandleItemStreamCreate(Connection *conn, size_t psize, Packet *packet);
 void HandleItemStreamDestroy(Connection *conn, size_t psize, Packet *packet);
 void HandleItemPriceQuote(Connection *conn, size_t psize, Packet *packet);
-void HandleMerchantReady();
 void HandleWindowOwner(Connection* conn, size_t psize, Packet* packet);
 void HandleWindowMerchant(Connection* conn, size_t psize, Packet* packet);
 void HandleWindowItemStreamEnd(Connection *conn, size_t psize, Packet *packet);

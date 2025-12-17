@@ -324,6 +324,29 @@ void HandleInventoryCreateBag(Connection *conn, size_t psize, Packet *packet)
     world->inventory.bags[pack->bag_model_id] = bag;
 }
 
+void HandleMerchantReady(GwClient* client)
+{
+    World *world = get_world_or_abort(client);
+
+    Item* item;
+    LogInfo("HandleMerchantReady called for %d items", world->tmp_merchant_items.size);
+    thread_mutex_lock(&client->mutex);
+    for (size_t i = 0; i < world->tmp_merchant_items.size; i++) {
+        array_add(&world->merchant_items, world->tmp_merchant_items.data[i]);
+        if (array_inside(&world->tmp_merchant_prices, i)) {
+            item = world->tmp_merchant_items.data[i];
+            // GW Bug: last sale price can be LOWER than the default item value!
+            if (item->value < world->tmp_merchant_prices.data[i])
+                item->value = world->tmp_merchant_prices.data[i];
+        }
+    }
+    thread_mutex_unlock(&client->mutex);
+    Event event;
+    Event_Init(&event, EventType_DialogOpen);
+    event.DialogOpen.sender_agent_id = world->merchant_agent_id;
+    broadcast_event(&client->event_mgr, &event);
+}
+
 void HandleWindowItemStreamEnd(Connection* conn, size_t psize, Packet* packet) {
     #pragma pack(push, 1)
         typedef struct {
@@ -388,29 +411,6 @@ void HandleWindowOwner(Connection *conn, size_t psize, Packet *packet)
     Event event;
     Event_Init(&event, EventType_DialogOpen);
     event.DialogOpen.sender_agent_id = pack->agent_id;
-    broadcast_event(&client->event_mgr, &event);
-}
-
-void HandleMerchantReady(GwClient* client)
-{
-    World *world = get_world_or_abort(client);
-
-    Item* item;
-    LogInfo("HandleMerchantReady called for %d items", world->tmp_merchant_items.size);
-    thread_mutex_lock(&client->mutex);
-    for (size_t i = 0; i < world->tmp_merchant_items.size; i++) {
-        array_add(&world->merchant_items, world->tmp_merchant_items.data[i]);
-        if (array_inside(&world->tmp_merchant_prices, i)) {
-            item = world->tmp_merchant_items.data[i];
-            // GW Bug: last sale price can be LOWER than the default item value!
-            if (item->value < world->tmp_merchant_prices.data[i])
-                item->value = world->tmp_merchant_prices.data[i];
-        }
-    }
-    thread_mutex_unlock(&client->mutex);
-    Event event;
-    Event_Init(&event, EventType_DialogOpen);
-    event.DialogOpen.sender_agent_id = world->merchant_agent_id;
     broadcast_event(&client->event_mgr, &event);
 }
 
