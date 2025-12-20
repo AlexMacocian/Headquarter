@@ -26,19 +26,21 @@ def main(args):
         scanner = FileScanner(exe_path)
         file_id = print_gw_exe_file_id.get_file_id(scanner)
     else:
+        scanner = None
         file_id = 0
     
     client = download.FileClient()
     client.connect()
 
     if (file_id == 0) or (client.file_id_latest_exe != file_id):
+        # The scanner holds reference to `exe_path` preventing it from being overwritten.
+        if scanner:
+            del scanner
+
         fr = client.request_file(client.file_id_latest_exe)
         with tqdm(total=fr.size_compressed, unit='B') as progress:
             for percent in fr.download():
                 progress.update(fr.last_chunk)
-
-        # The scanner holds reference to `exe_path` preventing it from being overwritten.
-        del scanner
         with open(exe_path, 'wb') as fd:
             fd.write(fr.decompressed())
         scanner = FileScanner(exe_path)
