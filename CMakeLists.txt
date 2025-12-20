@@ -10,6 +10,7 @@ option(ENABLE_TESTING "Build tests" OFF)
 option(HQ_ENABLE_TESTING "Build tests" OFF)
 
 find_package(MbedTLS REQUIRED)
+find_package(CURL REQUIRED)
 
 add_subdirectory(code)
 add_subdirectory(plugins)
