@@ -47,7 +47,7 @@ def main(args):
 
     pr, pm, pk = dump_key.get_keys_from_scanner(scanner)
     build = dump_key.get_build_number(scanner)
-    output = get_path_from_workspace(args.workspace, 'data', f'gw_{build}.pub')
+    output = get_path_from_workspace(args.workspace, 'data', f'gw_{build}.pub.txt')
     print(f"Writing Diffie-Hellman keys to '{output}'")
     dump_key.write_keys_in_file(output, pr, pm, pk)
 
