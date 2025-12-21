@@ -706,6 +706,7 @@ void SendPacket(Connection *conn, size_t size, void *p)
     out->size += written;
 leave:
     thread_mutex_unlock(&conn->mutex);
+    log_trace("[%s] send header: %u", conn->name, header);
 }
 
 void NetConn_Send(Connection *conn)
@@ -801,6 +802,7 @@ void NetConn_DispatchPackets(Connection *conn)
             return;
         }
 
+        log_trace("[%s] received header: %u", conn->name, header);
         MsgHandler handler = array_at(&conn->handlers, header);
         if (handler)
             handler(conn, format.unpack_size, &buffer.packet);
