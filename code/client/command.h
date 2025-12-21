@@ -8,7 +8,6 @@ typedef struct CommandOptions {
     bool        print_version;
     bool        verbose;
     bool        trace;
-    bool        newauth;
 
     const char *script;
     const char *auth_srv;
@@ -18,7 +17,8 @@ typedef struct CommandOptions {
     char        password[100];
     char        charname[20];
     char        secret_2fa[64];
-    char        log_file_name[256];
+    char        log_file[256];
+    char        log_dir[256];
 
     uint32_t    game_version;
     char        file_game_version[256];

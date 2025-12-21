@@ -97,6 +97,9 @@ void main_loop(void)
 
 int main(int argc, char **argv)
 {
+    if (log_init() != 0)
+        return 1;
+
     parse_command_args(argc - 1, argv + 1);
 
     if (options.print_version) {
@@ -105,18 +108,20 @@ int main(int argc, char **argv)
     }
 
     if (argc < 2 || options.print_help) {
-        print_help(true);
+        print_help(false);
+        return 0;
     }
 
-    // @Enhancement: add arguments "-seed=23232"
     unsigned int seed = (unsigned int)time(NULL);
     srand(seed);
 
     signal(SIGINT, sighandler);
-    log_init(options.log_file_name);
     time_init();
     init_timers();
 
+    if (log_set_file_output(options.log_file) != 0) {
+        return 1;
+    }
     if (options.verbose)
         log_set_level(LOG_DEBUG);
     if (options.trace)
@@ -129,7 +134,7 @@ int main(int argc, char **argv)
 
     Network_Init();
 
-    LogInfo("Initialization complete, running with client version %u\n", options.game_version);
+    LogInfo("Initialization complete, running with client version %u", options.game_version);
 
     client = malloc(sizeof(*client));
     init_client(client);
@@ -149,28 +154,22 @@ int main(int argc, char **argv)
         DECLARE_KSTR(password, 100);
         kstr_read_ascii(&password, options.password, ARRAY_SIZE(options.password));
 
-        if (options.newauth) {
-            const char *secret;
-            if (options.secret_2fa[0] == 0) {
-                secret = NULL;
-            } else {
-                secret = options.secret_2fa;
-            }
-
-            struct portal_login_result result;
-            int ret = portal_login(&result, options.email, options.password, secret);
-            if (ret != 0) {
-                fprintf(stderr, "Failed to connect to portal\n");
-                return 1;
-            }
-
-            client->portal_token = result.token;
-            client->portal_user_id = result.user_id;
+        const char *secret;
+        if (options.secret_2fa[0] == 0) {
+            secret = NULL;
         } else {
-            struct kstr email;
-            kstr_init_from_kstr_hdr(&email, &client->email);
-            compute_pswd_hash(&email, &password, client->password);
+            secret = options.secret_2fa;
         }
+
+        struct portal_login_result result;
+        int ret = portal_login(&result, options.email, options.password, secret);
+        if (ret != 0) {
+            fprintf(stderr, "Failed to connect to portal\n");
+            return 1;
+        }
+
+        client->portal_token = result.token;
+        client->portal_user_id = result.user_id;
 
     #if defined(HEADQUARTER_CONSOLE)
         SetConsoleTitleA(options.charname);
@@ -181,7 +180,7 @@ int main(int argc, char **argv)
         LogError("Couldn't load the plugin '%s'", options.script);
         return 1;
     }
-    LogInfo("Plugin loaded, %s\n", options.script);
+    LogInfo("Plugin loaded, %s", options.script);
 
     main_loop();
 
@@ -191,6 +190,7 @@ int main(int argc, char **argv)
     }
 
     Network_Shutdown();
+    log_cleanup();
     printf("Quit cleanly !!\n");
 
     return 0;

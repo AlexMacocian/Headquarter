@@ -194,13 +194,9 @@ void PortalAccountConnect(GwClient *client, struct uuid *user_id, struct uuid *t
 void AccountLogin(GwClient *client)
 {
     assert(client->state == AwaitAccountConnect);
-    if (options.newauth) {
-        struct kstr charname;
-        kstr_init_from_kstr_hdr(&charname, &client->charname);
-        PortalAccountConnect(client, &client->portal_user_id, &client->portal_token, &charname);
-    } else {
-        LogError("Legacy connection is not working anymore, please use '-newauth'");
-    }
+    struct kstr charname;
+    kstr_init_from_kstr_hdr(&charname, &client->charname);
+    PortalAccountConnect(client, &client->portal_user_id, &client->portal_token, &charname);
     client->state = AwaitAccountConnection;
     // client->state.connection_pending = true;
 }
