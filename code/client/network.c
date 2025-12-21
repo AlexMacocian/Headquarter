@@ -665,7 +665,6 @@ size_t NetMsg_Unpack(const uint8_t *data, size_t data_size,
 {
     int retval = unpack(data, data_size, cast(uint8_t *)packet, pack_size, format->fields, format->count);
     if (retval < 0) {
-        LogError("NetMsg_Unpack: Failed to unpack() for message header %u", format->header);
         return 0;
     }
     return (size_t)retval;
