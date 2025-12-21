@@ -56,7 +56,6 @@ typedef struct Connection {
     msec_t                  pong;
     msec_t                  latency;
 
-    thread_mutex_t          mutex;
     ByteBuffer              in;
     ByteBuffer              out;
 

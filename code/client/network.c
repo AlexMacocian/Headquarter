@@ -27,14 +27,8 @@ void NetConn_Reset(Connection *conn)
         conn->fd.handle = INVALID_SOCKET;
     }
 
-    thread_mutex_destroy(&conn->mutex);
-
     array_reset(&conn->in);
     array_reset(&conn->out);
-
-    // array_reset(&conn->srv_filter);
-    // array_reset(&conn->clt_filter);
-
     array_reset(&conn->handlers);
 }
 
@@ -71,8 +65,6 @@ void init_connection(Connection *conn, void *data)
     memzero(conn, sizeof(*conn));
 
     conn->data = data;
-
-    thread_mutex_init(&conn->mutex);
 
     array_init(&conn->in);
     array_init(&conn->out);
@@ -672,10 +664,8 @@ size_t NetMsg_Unpack(const uint8_t *data, size_t data_size,
 
 void SendPacket(Connection *conn, size_t size, void *p)
 {
-    thread_mutex_lock(&conn->mutex);
-
     if (conn->flags & NETCONN_REMOVE)
-        goto leave;
+        return;
 
     // @Robustness: This is undefined behaviors ! (Well not int practice)
     Packet *packet = cast(Packet *)p;
@@ -700,12 +690,10 @@ void SendPacket(Connection *conn, size_t size, void *p)
     size_t written = NetMsg_Pack(packet, size, buffer, availaible_length, &format);
     if (written == 0) {
         LogError("NetMsg_Pack failed for message %u", header);
-        goto leave;
+        return;
     }
 
     out->size += written;
-leave:
-    thread_mutex_unlock(&conn->mutex);
     log_trace("[%s] send header: %u", conn->name, header);
 }
 
@@ -713,9 +701,7 @@ void NetConn_Send(Connection *conn)
 {
     assert(conn && conn->secured);
 
-    thread_mutex_lock(&conn->mutex);
     if (conn->flags & NETCONN_REMOVE) {
-        thread_mutex_unlock(&conn->mutex);
         return;
     }
 
@@ -723,7 +709,6 @@ void NetConn_Send(Connection *conn)
     size_t size = out->size;
     uint8_t *buff = out->data;
     if (size == 0) {
-        thread_mutex_unlock(&conn->mutex);
         return;
     }
 
@@ -733,16 +718,13 @@ void NetConn_Send(Connection *conn)
     if (result == SOCKET_ERROR) {
         LogError("send failed: %d", os_errno);
         NetConn_HardShutdown(conn);
-        goto leave;
+        return;
     }
 
     size_t new_size = out->size - (size_t)result;
     if (new_size)
         memmove(out->data, out->data + (size_t)result, new_size);
     out->size = new_size;
-
-leave:
-    thread_mutex_unlock(&conn->mutex);
 }
 
 void NetConn_Recv(Connection *conn)
@@ -760,7 +742,6 @@ void NetConn_Recv(Connection *conn)
             NetConn_HardShutdown(conn);
             client->ingame = false;
         }
-        thread_mutex_unlock(&conn->mutex);
         return;
     }
 
