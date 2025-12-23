@@ -105,7 +105,7 @@ int FsGetLatestExeFileId(uint32_t *result)
 
     size_t idx;
     for (idx = 1; idx < max_idx; ++idx) {
-        int ret = snprintf(hostname, sizeof(hostname), "File%d.ArenaNetworks.com", idx);
+        int ret = snprintf(hostname, sizeof(hostname), "File%zu.ArenaNetworks.com", idx);
         if (ret < 0 || sizeof(hostname) <= ret) {
             log_error("Couldn't create the DNS name for the file server");
             continue;
