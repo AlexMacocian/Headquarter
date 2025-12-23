@@ -1,6 +1,12 @@
 #ifndef COMMON_PATHS_H
 #define COMMON_PATHS_H
 
+#ifdef _WIN32
+#define PATH_SEP '\\'
+#else
+#define PATH_SEP '/'
+#endif
+
 int open_dll(const char *filename, void **handle);
 int close_dll(void *handle);
 int get_dll_symbol(void* handle, const char *symbol, void **out);

@@ -122,8 +122,10 @@ int main(int argc, char **argv)
     init_timers();
 
     if (log_set_file_output(options.log_file) != 0) {
+        log_error("log_set_file_output failed");
         return 1;
     }
+
     if (options.verbose)
         log_set_level(LOG_DEBUG);
     if (options.trace)
@@ -134,15 +136,23 @@ int main(int argc, char **argv)
 #endif
     fps = 60;
 
+    // read the version data
+    if ((err = data_init(options.data_dir[0] != 0 ? options.data_dir : NULL)) != 0) {
+        log_error("data_init failed, %d", err);
+        return 1;
+    }
+
     Network_Init();
 
     LogInfo("Initialization complete, running with client version %u", options.game_version);
 
     uint32_t latest_client_file_id;
     if ((err = FsGetLatestExeFileId(&latest_client_file_id)) != 0) {
-        log_warn("Couldn't get the lastest file id");
-    } else {
-        log_info("Latest game file id is %" PRIu32, latest_client_file_id);
+        log_error("Couldn't get the lastest file id");
+        return 1;
+    } else if (g_GameData.version.file_id != latest_client_file_id) {
+        log_warn("Latest game file id is %" PRIu32, ", got %" PRIu32, latest_client_file_id, g_GameData.version.file_id);
+        return 1;
     }
 
     client = malloc(sizeof(*client));

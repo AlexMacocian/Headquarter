@@ -128,7 +128,6 @@ typedef union PacketBuffer {
 bool socket_would_block(int err);
 bool key_exchange_helper(Connection *conn, DiffieHellmanCtx *dhm);
 void arc4_hash(const uint8_t *key, uint8_t *digest);
-bool read_dhm_key_file(DiffieHellmanCtx *dhm, FILE* file);
 
 size_t get_static_size(MsgField *field);
 size_t get_element_size(MsgField *field);
@@ -141,8 +140,7 @@ int pack(const uint8_t *data, size_t data_size,
 
 mbedtls_entropy_context entropy;
 mbedtls_ctr_drbg_context ctr_drbg;
-DiffieHellmanCtx official_server_keys;
-DiffieHellmanCtx custom_server_keys;
+DiffieHellmanCtx server_keys;
 
 SockAddressArray AuthSrv_IPs;
 
@@ -155,9 +153,26 @@ void DiffieHellmanCtx_Reset(DiffieHellmanCtx *dhm)
     mbedtls_mpi_free(&dhm->primitive_root);
 }
 
-void Network_Init(void)
+int DiffieHellmanCtx_Make(DiffieHellmanCtx *dhm, GameData *data)
 {
     int err;
+    if ((err = mbedtls_mpi_read_string(&dhm->primitive_root, 10, data->network.root)) != 0) {
+        log_error("Couldn't parse the primitive root '%s', err: %d", data->network.root, err);
+        return 1;
+    }
+    if ((err = mbedtls_mpi_read_string(&dhm->server_public, 10, data->network.server_public)) != 0) {
+        log_error("Couldn't parse the server public key '%s', err: %d", data->network.server_public, err);
+        return 1;
+    }
+    if ((err = mbedtls_mpi_read_string(&dhm->prime_modulus, 10, data->network.prime)) != 0) {
+        log_error("Couldn't parse the prime modulus '%s', err: %d", data->network.prime, err);
+        return 1;
+    }
+    return 0;
+}
+
+void Network_Init(void)
+{
     if (Net_Initialized)
         return;
     
@@ -165,34 +180,15 @@ void Network_Init(void)
     WSADATA wsaData = {0};
     int wsa_error = WSAStartup(MAKEWORD(2, 2), &wsaData);
     if (wsa_error != NO_ERROR) {
-        printf("WSAError %d", wsa_error);
+        log_error("WSAError %d", wsa_error);
         return;
     }
 #endif
 
-    char file_path[320];
-    size_t length;
-    char dir_path[260];
-    if ((err = get_executable_dir(dir_path, sizeof(dir_path), &length)) != 0) {
-        abort();
+    if (DiffieHellmanCtx_Make(&server_keys, &g_GameData) != 0) {
+        log_error("Failed to create Diffie-Hellman params");
+        return;
     }
-
-    FILE* file = NULL;
-    bool file_read_ok = false;
-    for (int i = 0; i < 6 && !file_read_ok; i++) {
-        snprintf(file_path, sizeof(file_path), "%s/data/gw_%d.pub.txt", dir_path, options.game_version);
-        dir_path[length++] = '/';
-        dir_path[length++] = '.';
-        dir_path[length++] = '.';
-        dir_path[length] = 0;
-        file = fopen(file_path, "rb");
-        if (file) {
-            file_read_ok = read_dhm_key_file(&official_server_keys, file);
-            fclose(file);
-        }
-    }
-    assert(file_read_ok);
-    LogInfo("gw key found @ %s", file_path);
 
     const char secret[] = "Stradivarius";
     mbedtls_entropy_init(&entropy);
@@ -210,8 +206,7 @@ void Network_Shutdown(void)
         return;
 
     // Free stuff, see Init.
-    DiffieHellmanCtx_Reset(&official_server_keys);
-    DiffieHellmanCtx_Reset(&custom_server_keys);
+    DiffieHellmanCtx_Reset(&server_keys);
 
     mbedtls_entropy_free(&entropy);
     mbedtls_ctr_drbg_free(&ctr_drbg);
@@ -278,7 +273,6 @@ bool IPv4ToAddr(const char *host, const char *port, struct sockaddr *sockaddr)
 bool read_dhm_key_file(DiffieHellmanCtx *dhm, FILE *file)
 {
     char line[256];
-
     while (fgets(line, sizeof(line), file) != NULL) {
         size_t key_start_idx;
         size_t key_end_idx;
@@ -519,7 +513,7 @@ bool AuthSrv_Connect(Connection *conn)
         return false;
     }
 
-    if (!key_exchange_helper(conn, &official_server_keys)) {
+    if (!key_exchange_helper(conn, &server_keys)) {
         LogError("AuthSrv_Connect: key_exchange_helper() failed.");
         NetConn_Reset(conn);
         return false;        
@@ -588,7 +582,7 @@ bool GameSrv_Connect(Connection *conn,
         return false;
     }
 
-    if (!key_exchange_helper(conn, &official_server_keys)) {
+    if (!key_exchange_helper(conn, &server_keys)) {
         LogError("GameSrv_Connect: key_exchange_helper() failed.");
         NetConn_Reset(conn);
         return false;
