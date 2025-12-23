@@ -45,6 +45,7 @@
 #include <mbedtls/ctr_drbg.h>
 
 #include <common/macro.h>
+#include <common/basics.h>
 #include <common/time.h>
 #include <common/assert.h>
 #include <common/paths.h>
@@ -78,6 +79,7 @@
 #include "opcodes.h"
 #include "packets.h"
 #include "network.h"
+#include "filesrv.h"
 
 // @Cleanup: Temporary
 typedef struct GwClient GwClient;
@@ -138,6 +140,7 @@ typedef struct World World;
 
 #include "packets.c"
 #include "network.c"
+#include "filesrv.c"
 
 #include "arc4.c"
 #include "kstr.c"

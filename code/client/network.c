@@ -101,7 +101,7 @@ typedef struct _FILE_CMSG_VERSION {
     uint8_t  h0000; // 1
     uint32_t h0001; // 0
     uint32_t h0005; // 0x1000F1
-    uint32_t h0009; // game
+    uint32_t h0009; // game (1 for Guild Wars)
     uint32_t h000D; // 0
     uint32_t h0011; // 0
 } FILE_CMSG_VERSION; // size 21 (0x15)

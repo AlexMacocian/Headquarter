@@ -97,6 +97,8 @@ void main_loop(void)
 
 int main(int argc, char **argv)
 {
+    int err;
+
     if (log_init() != 0)
         return 1;
 
@@ -135,6 +137,13 @@ int main(int argc, char **argv)
     Network_Init();
 
     LogInfo("Initialization complete, running with client version %u", options.game_version);
+
+    uint32_t latest_client_file_id;
+    if ((err = FsGetLatestExeFileId(&latest_client_file_id)) != 0) {
+        log_warn("Couldn't get the lastest file id");
+    } else {
+        log_info("Latest game file id is %" PRIu32, latest_client_file_id);
+    }
 
     client = malloc(sizeof(*client));
     init_client(client);

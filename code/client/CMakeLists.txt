@@ -26,6 +26,8 @@ set(
   event.h
   friend.c
   friend.h
+  filesrv.h
+  filesrv.c
   game.c
   game.h
   guild.c
