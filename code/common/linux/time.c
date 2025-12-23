@@ -105,7 +105,7 @@ long time_diff_nsec(struct timespec *end, struct timespec *beginning)
 
 bool time_localtime(time_t timep, struct tm* result)
 {
-	if (localtime_r(timep, &result) == NULL)
+	if (localtime_r(&timep, result) == NULL)
 		return false;
 	return true;
 }
