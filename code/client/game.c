@@ -557,6 +557,7 @@ void GameSrv_RegisterCallbacks(Connection *conn)
     handlers[GAME_SMSG_WINDOW_OWNER]                    = HandleWindowOwner;
     handlers[GAME_SMSG_WINDOW_ADD_ITEMS]                = HandleWindowAddItems;
     handlers[GAME_SMSG_ITEM_PRICES]                     = HandleWindowAddPrices;
+    handlers[GAME_SMSG_WINDOW_TRADER]                   = HandleWindowTrader;
 
     // salvage
     handlers[GAME_SMSG_ITEM_SALVAGE_SESSION_START]      = HandleSalvageSessionStart;
@@ -685,6 +686,7 @@ void GameSrv_RegisterCallbacks(Connection *conn)
     handlers[GAME_SMSG_EFFECT_REMOVED]                  = HandleEffectRemoved;
 
     // parties
+    handlers[GAME_SMSG_UPDATE_AGENT_PARTYSIZE]          = HandleAgentPartySize;
     handlers[GAME_SMSG_PARTY_SET_DIFFICULTY]            = HandlePartySetDifficulty;
     handlers[GAME_SMSG_PARTY_HERO_ADD]                  = HandlePartyHeroAdd;
     handlers[GAME_SMSG_PARTY_HERO_REMOVE]               = HandlePartyHeroRemove;

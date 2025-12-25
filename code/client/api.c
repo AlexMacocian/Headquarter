@@ -393,23 +393,21 @@ leave:
     thread_mutex_unlock(&client->mutex);
 }
 
-HQAPI void RedirectMap(uint32_t map_id, District district, int district_number)
+HQAPI void RedirectMap(uint32_t map_id, District district, uint32_t district_number)
 {
     assert(client != NULL);
     thread_mutex_lock(&client->mutex);
     if (!client->connected)
         goto leave;
-    // @Enhancement: @Fix:
-    // We shouldn't access those stuff here.
+    uint32_t map_type = find_map_type_from_map_id(map_id);
+
     DistrictRegion region;
     DistrictLanguage language;
     extract_district(client, district, &region, &language);
 
-    uint32_t map_type = find_map_type_from_map_id(map_id);
-
     uint32_t trans_id = issue_next_transaction(client, AsyncType_None);
     AuthSrv_RequestInstance(&client->auth_srv, trans_id, map_id,
-        map_type, district_number, region, language);
+        map_type, 0, 0, 0);
 leave:
     thread_mutex_unlock(&client->mutex);
 }
@@ -446,7 +444,7 @@ HQAPI size_t GetCharacterName(char *buffer, size_t length)
 
     size_t written = 0;
     thread_mutex_lock(&client->mutex);
-    if (!client->current_character_idx || client->characters.size <= client->current_character_idx)
+    if (client->characters.size <= client->current_character_idx)
         goto leave;
     Character *cc = &client->characters.data[client->current_character_idx];
     if (!cc) goto leave;
@@ -1033,10 +1031,10 @@ HQAPI bool RequestItemQuote(uint32_t item_id)
     TransactionType type = TransactionType_TraderSell;
     QuoteInfo give;
     give.item_count = 0;
-    give.unk1 = 0;
+    give.gold = 0;
     QuoteInfo recv;
     recv.item_count = 0;
-    recv.unk1 = 0;
+    recv.gold = 0;
     if (!item->bag) {
         // Buy quote
         type = TransactionType_TraderBuy;
@@ -1049,7 +1047,7 @@ HQAPI bool RequestItemQuote(uint32_t item_id)
         give.item_count = 1;
         give.item_ids[0] = item_id;
     }
-    GameSrv_RequestQuote(client, type, &give, &recv);
+    GameSrv_RequestQuote(client, type, &give, &recv, false);
     success = true;
 leave:
     thread_mutex_unlock(&client->mutex);
@@ -1172,6 +1170,14 @@ HQAPI bool GetFriend(ApiFriend* friend, const uint16_t* name)
 leave:
     thread_mutex_unlock(&client->mutex);
     return found;
+}
+
+HQAPI void AddFriend(const uint16_t* name)
+{
+    assert(client != NULL);
+    thread_mutex_lock(&client->mutex);
+    AuthSrv_AddFriend(&client->auth_srv, name);
+    thread_mutex_unlock(&client->mutex);
 }
 
 HQAPI FactionPoint GetLuxonPoints(void)

@@ -14,6 +14,14 @@ typedef enum TransactionType {
     TransactionType_UnlockRunePriestOfBalth = 15
 } TransactionType;
 
+typedef enum TraderWindowType {
+    TraderWindowType_Dyes = 10,
+    TraderWindowType_CommonMaterials = 10,
+    TraderWindowType_Scrolls = 31,
+    TraderWindowType_RareMaterials = 258,
+    TraderWindowType_Runes = 258,
+} TraderWindowType;
+
 typedef struct TransactionInfo {
     uint32_t gold;
     size_t   item_count;
@@ -22,7 +30,7 @@ typedef struct TransactionInfo {
 } TransactionInfo;
 
 typedef struct QuoteInfo {
-    uint32_t unk1;
+    uint32_t gold;
     size_t   item_count;
     uint32_t item_ids[16];
 } QuoteInfo;

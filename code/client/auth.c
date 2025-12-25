@@ -305,6 +305,8 @@ void AuthSrv_RequestInstance(Connection *conn, uint32_t trans_id,
 
     client->state = AwaitGameServerInfo;
 
+    LogDebug("AuthSrv_RequestInstance: map %d, district_region %d, district_number %d, language %d", packet.map_id, packet.region, packet.district, packet.language);
+
     SendPacket(conn, sizeof(packet), &packet);
 }
 
@@ -351,6 +353,32 @@ void AuthSrv_SetPlayerStatus(Connection *conn, PlayerStatus status)
 
     SetPlayerStatus packet = NewPacket(AUTH_CMSG_SET_PLAYER_STATUS);
     packet.status = status;
+    SendPacket(conn, sizeof(packet), &packet);
+}
+
+void AuthSrv_AddFriend(Connection* conn, const uint16_t* _name)
+{
+#pragma pack(push, 1)
+    typedef struct {
+        Header header;
+        int32_t h0004;
+        int32_t h0008;
+        uint16_t name[20];
+        uint16_t account[20];
+    } AddFriend;
+#pragma pack(pop)
+
+    AddFriend packet = NewPacket(AUTH_CMSG_FRIEND_ADD);
+
+    DECLARE_KSTR(name, ARRAY_SIZE(packet.name));
+    kstr_read(&name, _name, ARRAY_SIZE(packet.name));
+
+    kstr_write(&name, packet.name, ARRAY_SIZE(packet.name));
+    kstr_write(&name, packet.account, ARRAY_SIZE(packet.account));
+
+    packet.h0004 = 1;
+    packet.h0008 = 1;
+
     SendPacket(conn, sizeof(packet), &packet);
 }
 

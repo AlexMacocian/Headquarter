@@ -293,6 +293,11 @@ void HandleAgentDespawned(Connection *conn, size_t psize, Packet *packet)
     }
 
     remove_agent(world, pack->agent_id);
+
+    Event params;
+    Event_Init(&params, EventType_AgentDespawned);
+    params.AgentDespawned.agent_id = pack->agent_id;
+    broadcast_event(&client->event_mgr, &params);
 }
 
 void HandleAgentStopMoving(Connection *conn, size_t psize, Packet *packet)
@@ -591,6 +596,14 @@ void HandleAgentDestroyPlayer(Connection* conn, size_t psize, Packet* packet)
     game_object_free(&client->object_mgr, &player->object);*/
 
     world->player_count--;
+
+    Player* player = array_at(&world->players, pack->player_id);
+    if (player && player->agent_id) {
+        Event params;
+        Event_Init(&params, EventType_AgentDespawned);
+        params.AgentDespawned.agent_id = player->agent_id;
+        broadcast_event(&client->event_mgr, &params);
+    }
 }
 
 void HandleUpdatePlayerInfo(Connection *conn, size_t psize, Packet *packet)

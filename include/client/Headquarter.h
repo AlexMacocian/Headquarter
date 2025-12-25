@@ -27,6 +27,10 @@
 #include <common/paths.h>
 #include <common/noreturn.h>
 
+#ifndef _Noreturn
+#define _Noreturn
+#endif
+
 typedef uint32_t uint;
 typedef uint64_t msec_t;
 typedef uint32_t AgentId;
@@ -94,10 +98,12 @@ HQAPI District          GetDistrict(void);
 HQAPI DistrictLanguage  GetDistrictLanguage(void);
 HQAPI DistrictRegion    GetDistrictRegion(void);
 HQAPI int               GetDistrictNumber(void);
+HQAPI DistrictLanguage  GetDistrictLanguage(void);
+HQAPI DistrictRegion    GetDistrictRegion(void);
 HQAPI void              Travel(uint32_t map_id, District district, uint16_t district_number);
 HQAPI void              TravelHall(uint32_t guild_id);
 HQAPI void              LeaveHall(void);
-HQAPI void              RedirectMap(uint32_t map_id, District district, int district_number);
+HQAPI void              RedirectMap(uint32_t map_id, District district, uint32_t district_number);
 HQAPI bool              IsMapUnlocked(uint32_t map_id);
 HQAPI size_t            GetMapsUnlocked(uint32_t* buffer, size_t length);
 
@@ -145,6 +151,8 @@ HQAPI size_t            GetQuests(ApiQuest *buffer, size_t length);
 
 HQAPI size_t            GetFriends(ApiFriend* buffer, size_t length);
 HQAPI bool              GetFriendByUuid(ApiFriend *frnd, const uint8_t *uuid);
+HQAPI bool              GetFriend(ApiFriend* frnd, const uint16_t* name);
+HQAPI void              AddFriend(const uint16_t* name);
 
 HQAPI FactionPoint      GetLuxonPoints(void);
 HQAPI FactionPoint      GetKurzickPoints(void);
@@ -219,4 +227,6 @@ HQAPI void              TradeRemoveItem(uint32_t item_id, uint32_t quantity);
 HQAPI void              TradeSendOffer(int gold);
 HQAPI void              TradeAccept(void);
 HQAPI void              TradeCancel(void);
+HQAPI int               GetArgc();
+HQAPI char**            GetArgv();
 #endif // HEADQUARTER_H
