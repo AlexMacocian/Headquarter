@@ -23,11 +23,7 @@ typedef struct CommandOptions {
     uint32_t    game_version;
     char        file_game_version[256];
 
-    bool        launch_service;
-    int         service_option; // windows => {'r', 'i', 'u'} or linux => {'r', 's'}
-
     int         online_status;
-    int32_t     seed;
 
     struct {
         bool set;
