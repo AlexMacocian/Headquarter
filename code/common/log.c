@@ -55,8 +55,10 @@ void log_cleanup(void)
         (void) thread_mutex_destroy(&log_mutex);
     }
 
-    (void) fclose(log_file);
-    log_file = NULL;
+    if (log_file) {
+        (void) fclose(log_file);
+        log_file = NULL;
+    }
 }
 
 void log_set_level(unsigned int level)
