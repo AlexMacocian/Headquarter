@@ -2,8 +2,7 @@
 #define COMMON_LOG_H
 
 enum {
-    LOG_CRITICAL = 1,
-    LOG_ERROR,
+    LOG_ERROR = 1,
     LOG_WARN,
     LOG_INFO,
     LOG_DEBUG,

@@ -19,8 +19,6 @@ static const char *
 log_print_level_s(unsigned int level)
 {
     switch (level) {
-        case LOG_CRITICAL:
-            return "critical";
         case LOG_ERROR:
             return "error";
         case LOG_WARN:
