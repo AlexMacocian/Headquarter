@@ -36,25 +36,27 @@ void NetConn_Reset(Connection *conn)
 
 void NetConn_HardShutdown(Connection *conn)
 {
-    shutdown(conn->fd.handle, SHUT_RDWR);
-    closesocket(conn->fd.handle);
-    conn->flags |= NETCONN_SHUTDOWN;
-}
-
-void NetConn_Shutdown(Connection *conn)
-{
-    NetConn_Send(conn);
+    thread_mutex_lock(&conn->mutex);
     array_reset(&conn->in);
     array_reset(&conn->out);
 
     shutdown(conn->fd.handle, SHUT_RDWR);
-    closesocket(conn->fd.handle);
     conn->flags |= NETCONN_SHUTDOWN;
+    thread_mutex_unlock(&conn->mutex);
+}
+
+void NetConn_Shutdown(Connection *conn)
+{
+    thread_mutex_lock(&conn->mutex);
+    NetConn_Send(conn);
+    shutdown(conn->fd.handle, SHUT_RDWR);
+    conn->flags |= NETCONN_SHUTDOWN;
+    thread_mutex_unlock(&conn->mutex);
 }
 
 bool NetConn_IsShutdown(Connection *conn)
 {
-    if ((conn->fd.handle == 0) || (conn->fd.handle == INVALID_SOCKET)) {
+    if ((conn->flags & NETCONN_SHUTDOWN) != 0 || (conn->fd.handle == 0) || (conn->fd.handle == INVALID_SOCKET)) {
         return true;
     } else {
         return false;
@@ -755,8 +757,6 @@ void NetConn_Recv(Connection *conn)
     uint8_t *dest = conn->in.data + conn->in.size;
     mbedtls_arc4_crypt(&conn->decrypt, cast(size_t)iresult, buffer, dest);
     conn->in.size += cast(size_t)iresult;
-
-    NetConn_DispatchPackets(conn);
 }
 
 void NetConn_DispatchPackets(Connection *conn)
@@ -812,11 +812,15 @@ void NetConn_Update(Connection *conn)
     if ((conn->fd.handle == 0) || (conn->fd.handle == INVALID_SOCKET))
         return;
 
-    NetConn_Send(conn);
-    NetConn_Recv(conn);
+    if ((conn->flags & NETCONN_SHUTDOWN) == 0) {
+        NetConn_Send(conn);
+        NetConn_Recv(conn);
+    }
+
+    NetConn_DispatchPackets(conn);
 
     if (conn->flags & NETCONN_SHUTDOWN) {
-        LogDebug("Shutdown connection '%s'", conn->name);
+        log_debug("Shutdown connection '%s'", conn->name);
 
         closesocket(conn->fd.handle);
         conn->fd.handle = INVALID_SOCKET;
