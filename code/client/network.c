@@ -662,14 +662,13 @@ size_t NetMsg_Unpack(const uint8_t *data, size_t data_size,
 
 void SendPacket(Connection *conn, size_t size, void *p)
 {
-    thread_mutex_lock(&conn->mutex);
-
-    if (conn->flags & NETCONN_REMOVE)
-        goto leave;
-
-    // @Robustness: This is undefined behaviors ! (Well not int practice)
     Packet *packet = cast(Packet *)p;
     Header header = packet->header & 0x7FFF;
+    log_trace("[%s] send header: %u", conn->name, header);
+
+    thread_mutex_lock(&conn->mutex);
+    if (conn->flags & NETCONN_REMOVE)
+        goto leave;
 
     assert(array_inside(&conn->client_msg_format, header));
 
@@ -677,7 +676,7 @@ void SendPacket(Connection *conn, size_t size, void *p)
     assert(header == format.header);
     assert(size == format.unpack_size);
 
-    ByteBuffer *out = &conn->out;
+    array_uint8_t *out = &conn->out;
     size_t availaible_length = out->capacity - out->size;
     if (availaible_length < sizeof(Header)) {
         LogError("Send buffer not big enough, flush socket stream", header);
@@ -696,7 +695,6 @@ void SendPacket(Connection *conn, size_t size, void *p)
     out->size += written;
 leave:
     thread_mutex_unlock(&conn->mutex);
-    log_trace("[%s] send header: %u", conn->name, header);
 }
 
 void NetConn_Send(Connection *conn)
@@ -709,7 +707,7 @@ void NetConn_Send(Connection *conn)
         return;
     }
 
-    ByteBuffer *out = &conn->out;
+    array_uint8_t *out = &conn->out;
     size_t size = out->size;
     uint8_t *buff = out->data;
     if (size == 0) {

@@ -59,7 +59,15 @@ union {                         \
 }
 
 typedef array(char)     array_char_t;
+typedef array(int)      array_int_t;
+typedef array(uint8_t)  array_uint8_t;
+typedef array(uint16_t) array_uint16_t;
 typedef array(uint32_t) array_uint32_t;
+typedef array(uint64_t) array_uint64_t;
+typedef array(int8_t)   array_int8_t;
+typedef array(int16_t)  array_int16_t;
+typedef array(int32_t)  array_int32_t;
+typedef array(int64_t)  array_int64_t;
 
 #define array_init(a)           _array_init(&(a)->base)
 #define array_reset(a)          _array_reset(&(a)->base);
