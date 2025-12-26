@@ -3,8 +3,10 @@
 
 #ifdef _WIN32
 #define PATH_SEP '\\'
+#define COMMON_PATH_MAX 260
 #else
 #define PATH_SEP '/'
+#define COMMON_PATH_MAX 4096
 #endif
 
 int open_dll(const char *filename, void **handle);

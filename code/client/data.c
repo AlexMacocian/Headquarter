@@ -89,7 +89,7 @@ int data_read_file(GameData *data, FILE *file)
 int data_init(const char *dir)
 {
     int err;
-    char buffer[MAX_PATH];
+    char buffer[COMMON_PATH_MAX];
 
     FILE *file = NULL;
     if (dir != NULL) {
@@ -107,7 +107,7 @@ int data_init(const char *dir)
             return 1;
         }
     } else {
-        char exe_dir[MAX_PATH];
+        char exe_dir[COMMON_PATH_MAX];
         size_t exe_dir_len;
         if ((err = get_executable_dir(exe_dir, sizeof(exe_dir), &exe_dir_len)) != 0) {
             return err;
