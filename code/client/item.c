@@ -355,14 +355,11 @@ void RequestSellableItems(GwClient* client, TransactionType type, uint32_t item_
             if (!*item) continue;
             if ((*item)->quantity < item_max_amount)
                 continue;
-            if (item_type == 10) {
-                // Dyes
-                if ((*item)->type != 10)
+            if (item_type == TraderWindowType_Dyes) {
+                if ((*item)->type != ItemType_Dye)
                     continue;
-            }
-            else if (item_type == 11) {
-                // Common materials
-                if ((*item)->type != 11)
+            } else if (item_type == TraderWindowType_CommonMaterials) {
+                if ((*item)->type != ItemType_Material)
                     continue;
                 bool is_common_material = false;
                 uint32_t* mod_struct;
@@ -376,10 +373,8 @@ void RequestSellableItems(GwClient* client, TransactionType type, uint32_t item_
                 }
                 if (!is_common_material)
                     continue;
-            }
-            else if (item_type == 258) {
-                // Rare materials
-                if ((*item)->type != 11)
+            } else if (item_type == TraderWindowType_RareMaterials) {
+                if ((*item)->type != ItemType_Material)
                     continue;
                 bool is_rare_material = false;
                 uint32_t* mod_struct;
@@ -393,10 +388,8 @@ void RequestSellableItems(GwClient* client, TransactionType type, uint32_t item_
                 }
                 if (!is_rare_material)
                     continue;
-            }
-            else if (item_type == 257) {
-                // Runes/Insignias
-                if ((*item)->type != 8)
+            } else if (item_type == TraderWindowType_Runes) {
+                if ((*item)->type != ItemType_Rune)
                     continue;
                 bool attaches_to_armor = false;
                 uint32_t* mod_struct;
@@ -408,10 +401,10 @@ void RequestSellableItems(GwClient* client, TransactionType type, uint32_t item_
                 }
                 if (!attaches_to_armor)
                     continue;
-            }
-            else {
+            } else {
                 continue; // Other types not supported
             }
+
             if (give.item_count == sizeof(give.item_ids) / sizeof(*give.item_ids)) {
                 world->tmp_merchant_pending_sell_preview++;
                 GameSrv_RequestQuote(client, type, &give, &recv, true);
