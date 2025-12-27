@@ -99,7 +99,6 @@ typedef struct GwClient {
     bool                ingame;
     bool                loading;
     bool                connected;
-    bool                try_changing_zone;
 
     // Server keys.
     uint32_t            world_id;

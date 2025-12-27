@@ -3,12 +3,6 @@
 #endif
 #define CORE_INSTANCES_C
 
-void begin_travel(GwClient *client)
-{
-    client->try_changing_zone = true;
-    // GameSrv_Disconnect();
-}
-
 void start_loading_new_zone(GwClient *client, struct sockaddr *host,
     uint32_t map_id, uint32_t world_id, uint32_t player_id)
 {

@@ -729,7 +729,6 @@ void HandleCantEnterOutpost(Connection *conn, size_t psize, Packet *packet)
     assert(client && client->game_srv.secured);
 
     LogInfo("Can't enter outpost: %d\n", pack->value);
-    client->try_changing_zone = false;
 
     Event event;
     Event_Init(&event, EventType_WorldCantTravel);
