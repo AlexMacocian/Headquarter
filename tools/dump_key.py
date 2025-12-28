@@ -48,9 +48,25 @@ def get_keys_from_scanner(scanner):
 
     return (pr, pm, pk)
 
-def write_keys_in_file(path, pr, pm, pk):
-    content = f'root = {pr}\nserver_public = {pk}\nprime = {pm}'
-    open(path, 'w').write(content)
+def dump(scanner, output=None):
+    pr, pm, pk = get_keys_from_scanner(scanner)
+    build = get_build_number(scanner)
+    file_id = get_file_id(scanner)
+
+    content = [
+        f'root = {pr}',
+        f'server_public = {pk}',
+        f'prime = {pm}',
+        f'build = {build}',
+        f'file_id = {file_id}',
+    ]
+
+    content = '\n'.join(content)
+    if output is None:
+        print(content)
+    else:
+        print(f'Writting to "{output}"')
+        open(output, 'w').write(content)
 
 def main(args):
     if args.pid:
@@ -64,29 +80,15 @@ def main(args):
         proc = process.Process.from_name(args.proc)
         scanner = process.ProcessScanner(proc)
 
-    pr, pm, pk = get_keys_from_scanner(scanner)
-    build = get_build_number(scanner)
-    file_id = get_file_id(scanner)
-
     if args.output:
-        output = args.output
+        if args.output == '-':
+            output = None
+        else:
+            output = args.output
     else:
         output = utils.get_path('data', f'gw_{build}.pub.txt')
 
-    content = [
-        f'root = {pr}',
-        f'server_public = {pk}',
-        f'prime = {pm}',
-        f'build = {build}',
-        f'file_id = {file_id}',
-    ]
-
-    content = '\n'.join(content)
-    if output == '-':
-        print(content)
-    else:
-        print(f'Writting to "{output}"')
-        open(output, 'w').write(content)
+    dump(scanner, output)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

@@ -45,11 +45,9 @@ def main(args):
             fd.write(fr.decompressed())
         scanner = FileScanner(exe_path)
 
-    pr, pm, pk = dump_key.get_keys_from_scanner(scanner)
     build = dump_key.get_build_number(scanner)
     output = get_path_from_workspace(args.workspace, 'data', f'gw_{build}.pub.txt')
-    print(f"Writing Diffie-Hellman keys to '{output}'")
-    dump_key.write_keys_in_file(output, pr, pm, pk)
+    dump_key.dump(scanner, output)
 
     build_file_path = get_path_from_workspace(args.workspace, 'Gw.build')
     print(f"Writing build number to '{build_file_path}'")
