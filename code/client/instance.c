@@ -162,7 +162,6 @@ void GameSrv_TravelGH(GwClient *client, const struct uuid *guild_uuid)
 #pragma pack(pop)
     
     assert(client && client->game_srv.secured);
-    begin_travel(client);
 
     TravelHall packet = NewPacket(GAME_CMSG_PARTY_ENTER_GUILD_HALL);
     uuid_enc_le(packet.uuid, guild_uuid);
@@ -267,7 +266,6 @@ void GameSrv_Travel(GwClient *client, uint16_t map_id, District district, uint16
 
     assert(client && client->game_srv.secured);
     World *world = get_world_or_abort(client);
-    begin_travel(client);
 
     TravelInfo packet = NewPacket(GAME_CMSG_PARTY_TRAVEL);
 
@@ -338,8 +336,6 @@ void HandleInstanceLoadFinish(Connection *conn, size_t psize, Packet *packet)
 void GameSrv_ReturnToOutpost(GwClient *client)
 {
     assert(client && client->game_srv.secured);
-    begin_travel(client);
-    
     Packet packet = NewPacket(GAME_CMSG_PARTY_RETURN_TO_OUTPOST);
     SendPacket(&client->game_srv, sizeof(packet), &packet);
 }

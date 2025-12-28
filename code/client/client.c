@@ -236,12 +236,6 @@ void ContinuePlayCharacter(GwClient *client, uint32_t error_code)
         return;
     }
 
-    // @Cleanup:
-    // We could teleport to the last map of the character, but for that
-    // we would need to find the type from data. Can be done with `AreaInfo`.
-    extern void begin_travel(GwClient *client);
-    begin_travel(client);
-
     // Character *cc = client->current_character; // can use to find the map
     uint32_t trans_id = issue_next_transaction(client, AsyncType_PlayCharacter);
     LogDebug("AuthSrv_RequestInstance: {trans_id: %lu}", trans_id);
