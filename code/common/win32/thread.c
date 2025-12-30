@@ -71,14 +71,18 @@ int thread_join(struct thread *thread, int *retval)
     return 0;
 }
 
-int thread_sleep(struct thread *thread, const struct timespec *ts)
+int thread_sleep(const struct timespec *ts)
 {
-    UNREFERENCED_PARAMETER(thread);
-
     DWORD sleep_time_ms;
     sleep_time_ms =  (DWORD)ts->tv_sec * 1000;
     sleep_time_ms += ts->tv_nsec / 1000000;
     Sleep(sleep_time_ms);
+    return 0;
+}
+
+int thread_sleep_ms(uint32_t duration_ms)
+{
+    Sleep(duration_ms);
     return 0;
 }
 

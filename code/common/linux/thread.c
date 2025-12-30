@@ -73,13 +73,19 @@ int thread_join(struct thread *thread, int *retval)
     }
 }
 
-int thread_sleep(struct thread *thread, const struct timespec *ts)
+int thread_sleep(const struct timespec *ts)
 {
     struct timespec rem;
     int retval = nanosleep(ts, &rem);
-    // @Cleanup:
-    // Deal with the retval + logging?
     return retval;
+}
+
+int thread_sleep_ms(uint32_t duration_ms)
+{
+    struct timespec ts;
+    ts.tv_sec = duration_ms / 1000;
+    ts.tv_nsec = (duration_ms % 1000) * 1000000;
+    return thread_sleep(&ts);
 }
 
 void thread_yield(void)

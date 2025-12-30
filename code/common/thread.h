@@ -45,7 +45,8 @@ struct thread thread_self(void);
 
 int thread_detach(struct thread *thread);
 int thread_join(struct thread *thread, int *retval);
-int thread_sleep(struct thread *thread, const struct timespec *ts);
+int thread_sleep(const struct timespec *ts);
+int thread_sleep_ms(uint32_t duration_ms);
 void thread_yield(void);
 
 typedef struct thread_mutex {
