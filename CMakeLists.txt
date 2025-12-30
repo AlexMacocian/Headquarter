@@ -9,6 +9,8 @@ project(
 option(ENABLE_TESTING "Build tests" OFF)
 option(HQ_ENABLE_TESTING "Build tests" OFF)
 
+find_package(MbedTLS REQUIRED)
+
 add_subdirectory(code)
 add_subdirectory(plugins)
 

@@ -6,6 +6,10 @@ archive/
 logs/
 build/
 
+# Dependencies need to be installed in
+deps-cmake/
+deps-vendor/
+
 *.exe
 *.user
 

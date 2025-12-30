@@ -7,21 +7,24 @@
 
 ## Building Headquarter with CMake
 
-### With MSVC
-```
-> cmake -B build -G "Visual Studio 14 2015" -A Win32
-> cmake --build build
-```
-
 ### On Debian based system, with ninja
-Ensure ninja and cmake are installed.
+
+Ensure Linux dependencies are installed.
 ```
-> sudo apt install ninja-build cmake
+> sudo apt install ninja-build cmake clang libssl-dev python3
 ```
 
-Generate the project and compile it.
+### Downloading and building dependencies
+
+This should only be necessary the first time you clone the repo.
 ```
-> cmake -B build -G "Ninja" -DCMAKE_C_COMPILER=clang
+> python bootstrap.py
+```
+
+### Building Headquarter
+
+It should now be possible to build Headquarter.
+```
 > cmake --build build
 ```
 
