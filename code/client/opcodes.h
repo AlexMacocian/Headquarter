@@ -1,10 +1,6 @@
 #ifndef OPCODES_H_INC
 #define OPCODES_H_INC
 
-// to add:
-// 138 fog of war, 149 default unlocked outpost & more, 154 unlock one outpost
-// 221, 29 (account), 215, 220 skills unlock
-
 #define AUTH_CMSG_COUNT (57)
 #define AUTH_SMSG_COUNT (39)
 #define GAME_CMSG_COUNT (194)
