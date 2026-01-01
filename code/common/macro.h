@@ -24,8 +24,6 @@
 
 #define STATIC_ASSERT(expr) static_assert(expr, #expr)
 
-#ifndef UNREFERENCED_PARAMETER
-#define UNREFERENCED_PARAMETER(p) ((void)p)
-#endif
+#define UNUSED_PARAMETER(p) ((void)p)
 
 #endif // COMMON_MACRO_H

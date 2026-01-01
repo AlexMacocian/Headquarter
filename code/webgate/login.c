@@ -45,7 +45,7 @@ void webgate_cleanup()
 
 size_t write_callback(char *ptr, size_t size, size_t nmemb, void *userdata)
 {
-    UNREFERENCED_PARAMETER(size);
+    UNUSED_PARAMETER(size);
 
     struct webgate_response *resp = (struct webgate_response *) userdata;
 
