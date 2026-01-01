@@ -21,9 +21,9 @@ def run(runargs, *args, **kwargs):
 def main(args):
     workspace = os.path.dirname(__file__)
     build_dir = os.path.join(workspace, args.build_dir)
-    deps_install_dir = os.path.join(workspace, 'deps-cmake')
+    deps_install_dir = os.path.join(workspace, 'deps', _SYSTEM_NAME)
     deps_vendor_dir = os.path.join(workspace, 'deps-vendor')
-    deps_build_dir = os.path.join(workspace, 'deps-build')
+    deps_build_dir = os.path.join(workspace, 'deps-build', _SYSTEM_NAME)
 
     if args.clean:
         if os.path.exists(deps_install_dir):
@@ -59,8 +59,8 @@ def main(args):
         run(['git', 'clone', '--depth', '1', '--branch', _MBEDTLS_TAG, 'https://github.com/Mbed-TLS/mbedtls.git', mbedtls_dir])
     run(['git', 'submodule', 'update', '--init', '--recursive', '--depth=1'], cwd=mbedtls_dir)
 
-    curl_build_dir = os.path.join(deps_build_dir, 'curl', _SYSTEM_NAME)
-    mbedtls_build_dir = os.path.join(deps_build_dir, 'mbedtls', _SYSTEM_NAME)
+    curl_build_dir = os.path.join(deps_build_dir, 'curl')
+    mbedtls_build_dir = os.path.join(deps_build_dir, 'mbedtls')
 
     run([
         'cmake',
