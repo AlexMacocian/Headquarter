@@ -20,7 +20,7 @@ def run(runargs, *args, **kwargs):
 
 def main(args):
     workspace = os.path.dirname(__file__)
-    build_dir = os.path.join(workspace, 'build')
+    build_dir = os.path.join(workspace, args.build_dir)
     deps_install_dir = os.path.join(workspace, 'deps-cmake')
     deps_vendor_dir = os.path.join(workspace, 'deps-vendor')
     deps_build_dir = os.path.join(workspace, 'deps-build')
@@ -107,7 +107,7 @@ def main(args):
     run([
         'cmake',
         '-G', generator,
-        '-B', args.build_dir,
+        '-B', build_dir,
         cmake_build_type,
         cmake_c_compiler,
         f'-DCMAKE_PREFIX_PATH={deps_install_dir}',
