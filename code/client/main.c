@@ -55,6 +55,14 @@ void main_loop(void)
             client->ingame = false;
             client->loading = true;
             client->state = AwaitGameServerTransfer;
+
+            World *world;
+            if ((world = get_world(client)) != NULL) {
+                Event event;
+                Event_Init(&event, EventType_WorldMapLeave);
+                broadcast_event(&client->event_mgr, &event);
+                reset_world(world);
+            }
         }
 
         if (client->state == AwaitGameServerTransfer &&

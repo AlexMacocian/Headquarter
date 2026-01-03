@@ -348,6 +348,11 @@ bool read_dhm_key_file(DiffieHellmanCtx *dhm, FILE *file)
     return true;
 }
 
+bool socket_is_valid(struct socket *sock)
+{
+    return sock->handle != INVALID_SOCKET && sock->handle != 0;
+}
+
 bool socket_would_block(int err)
 {
 #ifdef _WIN32
@@ -535,6 +540,8 @@ bool GameSrv_Connect(Connection *conn,
     uint32_t world_hash, uint32_t player_hash, uint32_t map)
 {
     assert(Net_Initialized);
+    assert(!socket_is_valid(&conn->fd));
+
     int result;
 
     conn->name = "GameSrv";
@@ -809,7 +816,7 @@ void NetConn_DispatchPackets(Connection *conn)
 
 void NetConn_Update(Connection *conn)
 {
-    if ((conn->fd.handle == 0) || (conn->fd.handle == INVALID_SOCKET))
+    if (!socket_is_valid(&conn->fd))
         return;
 
     if ((conn->flags & NETCONN_SHUTDOWN) == 0) {
