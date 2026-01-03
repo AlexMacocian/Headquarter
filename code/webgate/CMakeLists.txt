@@ -21,7 +21,7 @@ add_library(
   ${WEBGATE_SOURCES}
 )
 
-target_link_libraries(webgate PRIVATE common MbedTLS::mbedcrypto CURL::libcurl)
+target_link_libraries(webgate PRIVATE common MbedTLS::mbedcrypto CURL::libcurl_static)
 target_include_directories(
   webgate
 

@@ -85,10 +85,13 @@ def main(args):
         '-DCURL_ENABLE_SSL=On',
         '-DCURL_USE_LIBPSL=Off',
         '-DBUILD_CURL_EXE=Off',
+        '-DBUILD_SHARED_LIBS=Off',
     ]
 
     if _SYSTEM_NAME == 'Linux':
         cmake_args.append('-DCURL_USE_OPENSSL=On')
+    elif _SYSTEM_NAME == 'Windows':
+        cmake_args.append('-DCURL_USE_SCHANNEL=On')
 
     run(cmake_args)
 
