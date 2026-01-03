@@ -44,7 +44,7 @@ void HandlePlayerUpdateFactions(Connection *conn, size_t psize, Packet *packet)
     } PlayerAttr;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_PLAYER_UPDATE_FACTIONS);
+    assert(packet->header == GAME_SMSG_CHARACTER_UPDATE_FACTIONS);
     assert(sizeof(PlayerAttr) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
@@ -78,7 +78,7 @@ void HandlePlayerFactionMaxKurzick(Connection *conn, size_t psize, Packet *packe
     } MaxFaction;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_PLAYER_FACTION_MAX_KURZICK);
+    assert(packet->header == GAME_SMSG_CHARACTER_FACTION_MAX_KURZICK);
     assert(sizeof(MaxFaction) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
@@ -97,7 +97,7 @@ void HandlePlayerFactionMaxLuxon(Connection *conn, size_t psize, Packet *packet)
     } MaxFaction;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_PLAYER_FACTION_MAX_LUXON);
+    assert(packet->header == GAME_SMSG_CHARACTER_FACTION_MAX_LUXON);
     assert(sizeof(MaxFaction) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
@@ -116,7 +116,7 @@ void HandlePlayerFactionMaxBalthazar(Connection *conn, size_t psize, Packet *pac
     } MaxFaction;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_PLAYER_FACTION_MAX_BALTHAZAR);
+    assert(packet->header == GAME_SMSG_CHARACTER_FACTION_MAX_BALTHAZAR);
     assert(sizeof(MaxFaction) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
@@ -135,7 +135,7 @@ void HandlePlayerFactionMaxImperial(Connection *conn, size_t psize, Packet *pack
     } MaxFaction;
 #pragma pack(pop)
     
-    assert(packet->header == GAME_SMSG_PLAYER_FACTION_MAX_IMPERIAL);
+    assert(packet->header == GAME_SMSG_CHARACTER_FACTION_MAX_IMPERIAL);
     assert(sizeof(MaxFaction) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
@@ -155,7 +155,7 @@ void HandlePlayerFactionUpdate(Connection *conn, size_t psize, Packet *packet)
     } UpdateAttr;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_PLAYER_FACTION_UPDATE);
+    assert(packet->header == GAME_SMSG_CHARACTER_FACTION_UPDATE);
     assert(sizeof(UpdateAttr) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
@@ -203,7 +203,7 @@ void HandlePlayerUnlockedAreas(Connection* conn, size_t psize, Packet* packet) {
         uint32_t maps_unlocked_buf[32];
     } MapsUnlocked;
 #pragma pack(pop)
-    assert(packet->header == GAME_SMSG_MAPS_UNLOCKED);
+    assert(packet->header == GAME_SMSG_MAP_UPDATE_UNLOCKED_LIST);
     assert(sizeof(MapsUnlocked) == psize);
 
     GwClient* client = cast(GwClient*)conn->data;

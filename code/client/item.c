@@ -118,7 +118,7 @@ void HandleItemGeneralInfo(Connection *conn, size_t psize, Packet *packet)
     } ItemInfo;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_ITEM_GENERAL_INFO);
+    assert(packet->header == GAME_SMSG_CREATE_NAMED_ITEM);
     assert(sizeof(ItemInfo) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
@@ -479,7 +479,7 @@ void HandleWindowMerchant(Connection* conn, size_t psize, Packet* packet) {
         } WindowMerchant;
     #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_WINDOW_MERCHANT);
+    assert(packet->header == GAME_SMSG_MERCHANT_WINDOW_OPEN);
     assert(sizeof(WindowMerchant) == psize);
 
     GwClient* client = cast(GwClient*)conn->data;
@@ -505,7 +505,7 @@ void HandleWindowTrader(Connection* conn, size_t psize, Packet* packet) {
     } WindowTrader;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_WINDOW_TRADER);
+    assert(packet->header == GAME_SMSG_TRADER_WINDOW_OPEN);
     assert(sizeof(WindowTrader) == psize);
 
     GwClient* client = cast(GwClient*)conn->data;
@@ -529,7 +529,7 @@ void HandleWindowOwner(Connection *conn, size_t psize, Packet *packet)
     } WindowOwner;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_WINDOW_OWNER);
+    assert(packet->header == GAME_SMSG_MERCHANT_WINDOW_UPDATE_OWNER);
     assert(sizeof(WindowOwner) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;

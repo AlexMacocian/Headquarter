@@ -96,7 +96,7 @@ void HandleSkillAddToWindowsData(Connection *conn, size_t psize, Packet *packet)
     } WindowsData;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_SKILL_ADD_TO_WINDOWS_DATA);
+    assert(packet->header == GAME_SMSG_SKILL_WINDOW_DATA);
     assert(sizeof(WindowsData) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
@@ -113,7 +113,7 @@ void HandleSkillAddToWindowsEnd(Connection *conn, size_t psize, Packet *packet)
     } WindowsEnd;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_SKILL_ADD_TO_WINDOWS_END);
+    assert(packet->header == GAME_SMSG_SKILL_WINDOW_END);
     assert(sizeof(WindowsEnd) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;

@@ -528,7 +528,7 @@ void GameSrv_RegisterCallbacks(Connection *conn)
     handlers[GAME_SMSG_INSTANCE_LOAD_INFO]              = HandleInstanceLoadInfo;
     handlers[GAME_SMSG_TRANSFER_GAME_SERVER_INFO]       = HandleGameTransferInfo;
     handlers[GAME_SMSG_READY_FOR_MAP_SPAWN]             = HandleReadyForMapSpawn;
-    handlers[GAME_SMSG_INSTANCE_CANT_ENTER]             = HandleCantEnterOutpost;
+    handlers[GAME_SMSG_INSTANCE_TRAVEL_FAILURE]         = HandleCantEnterOutpost;
     handlers[GAME_SMSG_INSTANCE_TRAVEL_TIMER]           = HandleInstanceTravelTimer;
     handlers[GAME_SMSG_INSTANCE_LOAD_FINISH]            = HandleInstanceLoadFinish;
     handlers[GAME_SMSG_INSTANCE_LOADED]                 = HandleInstanceLoaded;
@@ -548,16 +548,16 @@ void GameSrv_RegisterCallbacks(Connection *conn)
     handlers[GAME_SMSG_ITEM_STREAM_DESTROY]             = HandleItemStreamDestroy;
     handlers[GAME_SMSG_ITEM_WEAPON_SET]                 = HandleItemWeaponSet;
     handlers[GAME_SMSG_ITEM_SET_ACTIVE_WEAPON_SET]      = HandleUpdateActiveWeaponSet;
-    handlers[GAME_SMSG_ITEM_GENERAL_INFO]               = HandleItemGeneralInfo;
+    handlers[GAME_SMSG_CREATE_NAMED_ITEM]               = HandleItemGeneralInfo;
     handlers[GAME_SMSG_ITEM_CHANGE_LOCATION]            = HandleItemChangeLocation;
     handlers[GAME_SMSG_ITEM_REMOVE]                     = HandleItemRemove;
     handlers[GAME_SMSG_ITEM_PRICE_QUOTE]                = HandleItemPriceQuote;
-    handlers[GAME_SMSG_WINDOW_MERCHANT]                 = HandleWindowMerchant;
+    handlers[GAME_SMSG_MERCHANT_WINDOW_OPEN]            = HandleWindowMerchant;
     handlers[GAME_SMSG_WINDOW_ITEM_STREAM_END]          = HandleWindowItemStreamEnd;
-    handlers[GAME_SMSG_WINDOW_OWNER]                    = HandleWindowOwner;
+    handlers[GAME_SMSG_MERCHANT_WINDOW_UPDATE_OWNER]    = HandleWindowOwner;
     handlers[GAME_SMSG_WINDOW_ADD_ITEMS]                = HandleWindowAddItems;
     handlers[GAME_SMSG_ITEM_PRICES]                     = HandleWindowAddPrices;
-    handlers[GAME_SMSG_WINDOW_TRADER]                   = HandleWindowTrader;
+    handlers[GAME_SMSG_TRADER_WINDOW_OPEN]              = HandleWindowTrader;
 
     // salvage
     handlers[GAME_SMSG_ITEM_SALVAGE_SESSION_START]      = HandleSalvageSessionStart;
@@ -567,11 +567,11 @@ void GameSrv_RegisterCallbacks(Connection *conn)
     handlers[GAME_SMSG_ITEM_SALVAGE_SESSION_ITEM_KEPT]  = HandleSalvageSessionItemKept;
 
     // agents
-    handlers[GAME_SMSG_AGENT_MOVEMENT_TICK]             = HandleAgentMovementTick;
-    handlers[GAME_SMSG_AGENT_INSTANCE_TIMER]            = HandleAgentInstanceTimer;
-    handlers[GAME_SMSG_AGENT_SPAWNED]                   = HandleAgentSpawned;
-    handlers[GAME_SMSG_AGENT_DESPAWNED]                 = HandleAgentDespawned;
-    handlers[GAME_SMSG_AGENT_SET_PLAYER]                = HandleAgentSetPlayer;
+    handlers[GAME_SMSG_WORLD_SIMULATION_TICK]           = HandleAgentMovementTick;
+    handlers[GAME_SMSG_WORLD_UPDATE_LOAD_TIME]          = HandleAgentInstanceTimer;
+    handlers[GAME_SMSG_WORLD_CREATE_AGENT]              = HandleAgentSpawned;
+    handlers[GAME_SMSG_WORLD_REMOVE_AGENT]              = HandleAgentDespawned;
+    handlers[GAME_SMSG_WORLD_UPDATE_CONTROLLED_AGENT]   = HandleAgentSetPlayer;
     handlers[GAME_SMSG_AGENT_UPDATE_DIRECTION]          = HandleAgentUpdateDirection;
     handlers[GAME_SMSG_AGENT_UPDATE_SPEED_BASE]         = HandleAgentUpdateSpeedBase;
     handlers[GAME_SMSG_AGENT_STOP_MOVING]               = HandleAgentStopMoving;
@@ -580,7 +580,7 @@ void GameSrv_RegisterCallbacks(Connection *conn)
     handlers[GAME_SMSG_AGENT_UPDATE_POSITION]           = HandleAgentUpdatePosition;
     handlers[GAME_SMSG_AGENT_UPDATE_ROTATION]           = HandleAgentUpdateRotation;
     handlers[GAME_SMSG_AGENT_UPDATE_DESTINATION]        = HandleAgentUpdateDestination;
-    handlers[GAME_SMSG_UPDATE_PLAYER_INFO]              = HandleUpdatePlayerInfo;
+    handlers[GAME_SMSG_PLAYER_UPDATE_AGENT_INFO]        = HandleUpdatePlayerInfo;
     handlers[GAME_SMSG_AGENT_DESTROY_PLAYER]            = HandleAgentDestroyPlayer;
     
     handlers[GAME_SMSG_AGENT_CREATE_NPC]                = HandleAgentCreateNPC;
@@ -590,16 +590,16 @@ void GameSrv_RegisterCallbacks(Connection *conn)
     handlers[GAME_SMSG_NPC_UPDATE_PROPERTIES]           = HandleNPCUpdateProperties;
     handlers[GAME_SMSG_NPC_UPDATE_MODEL]                = HandleNPCUpdateModel;
 
-    handlers[GAME_SMSG_PLAYER_UNLOCKED_PROFESSION]      = HandlePlayerUnlockedProfession;
-    handlers[GAME_SMSG_PLAYER_UPDATE_PROFESSION]        = HandlePlayerUpdateProfession;
+    handlers[GAME_SMSG_PLAYER_UPDATE_UNLOCKED_PROFESSIONS] = HandlePlayerUnlockedProfession;
+    handlers[GAME_SMSG_PLAYER_UPDATE_PROFESSION]           = HandlePlayerUpdateProfession;
 
     // agent update
-    handlers[GAME_SMSG_AGENT_UPDATE_NPC_NAME]           = HandleAgentUpdateNpcName;
-    handlers[GAME_SMSG_AGENT_ATTR_UPDATE_INT]           = HandleAgentAttrUpdateInt;
-    handlers[GAME_SMSG_AGENT_ATTR_UPDATE_INT_TARGET]    = HandleAgentAttrUpdateIntTarget;
-    handlers[GAME_SMSG_AGENT_ATTR_UPDATE_FLOAT]         = HandleAgentAttrUpdateFloat;
-    handlers[GAME_SMSG_AGENT_ATTR_UPDATE_FLOAT_TARGET]  = HandleAgentAttrUpdateFloatTarget;
-    handlers[GAME_SMSG_AGENT_UPDATE_PROFESSION]         = HandleAgentUpdateProfession;
+    handlers[GAME_SMSG_AGENT_UPDATE_NPC_NAME]              = HandleAgentUpdateNpcName;
+    handlers[GAME_SMSG_AGENT_PROPERTY_UPDATE_INT]          = HandleAgentAttrUpdateInt;
+    handlers[GAME_SMSG_AGENT_PROPERTY_UPDATE_INT_TARGET]   = HandleAgentAttrUpdateIntTarget;
+    handlers[GAME_SMSG_AGENT_PROPERTY_UPDATE_FLOAT]        = HandleAgentAttrUpdateFloat;
+    handlers[GAME_SMSG_AGENT_PROPERTY_UPDATE_FLOAT_TARGET] = HandleAgentAttrUpdateFloatTarget;
+    handlers[GAME_SMSG_AGENT_UPDATE_PROFESSION]            = HandleAgentUpdateProfession;
 
     // cinematic
     handlers[GAME_SMSG_CINEMATIC_START]                 = HandleCinematicStart;
@@ -624,18 +624,18 @@ void GameSrv_RegisterCallbacks(Connection *conn)
     handlers[GAME_SMSG_CHAT_MESSAGE_SERVER]             = HandleChatMessageServer;
 
     // players
-    handlers[GAME_SMSG_PLAYER_UPDATE_FACTIONS]          = HandlePlayerUpdateFactions;
-    handlers[GAME_SMSG_PLAYER_FACTION_MAX_KURZICK]      = HandlePlayerFactionMaxKurzick;
-    handlers[GAME_SMSG_PLAYER_FACTION_MAX_LUXON]        = HandlePlayerFactionMaxLuxon;
-    handlers[GAME_SMSG_PLAYER_FACTION_MAX_BALTHAZAR]    = HandlePlayerFactionMaxBalthazar;
-    handlers[GAME_SMSG_PLAYER_FACTION_MAX_IMPERIAL]     = HandlePlayerFactionMaxImperial;
-    handlers[GAME_SMSG_PLAYER_FACTION_UPDATE]           = HandlePlayerFactionUpdate;
-    handlers[GAME_SMSG_MAPS_UNLOCKED]                   = HandlePlayerUnlockedAreas;
+    handlers[GAME_SMSG_CHARACTER_UPDATE_FACTIONS]       = HandlePlayerUpdateFactions;
+    handlers[GAME_SMSG_CHARACTER_FACTION_MAX_KURZICK]   = HandlePlayerFactionMaxKurzick;
+    handlers[GAME_SMSG_CHARACTER_FACTION_MAX_LUXON]     = HandlePlayerFactionMaxLuxon;
+    handlers[GAME_SMSG_CHARACTER_FACTION_MAX_BALTHAZAR] = HandlePlayerFactionMaxBalthazar;
+    handlers[GAME_SMSG_CHARACTER_FACTION_MAX_IMPERIAL]  = HandlePlayerFactionMaxImperial;
+    handlers[GAME_SMSG_CHARACTER_FACTION_UPDATE]        = HandlePlayerFactionUpdate;
+    handlers[GAME_SMSG_MAP_UPDATE_UNLOCKED_LIST]        = HandlePlayerUnlockedAreas;
     // skills
     handlers[GAME_SMSG_SKILLBAR_UPDATE_SKILL]           = HandleSkillbarUpdateSkill;
     handlers[GAME_SMSG_SKILLBAR_UPDATE]                 = HandleSkillbarUpdate;
-    handlers[GAME_SMSG_SKILL_ADD_TO_WINDOWS_DATA]       = HandleSkillAddToWindowsData;
-    handlers[GAME_SMSG_SKILL_ADD_TO_WINDOWS_END]        = HandleSkillAddToWindowsEnd;
+    handlers[GAME_SMSG_SKILL_WINDOW_DATA]               = HandleSkillAddToWindowsData;
+    handlers[GAME_SMSG_SKILL_WINDOW_END]                = HandleSkillAddToWindowsEnd;
     handlers[GAME_SMSG_SKILL_ACTIVATED]                 = HandleSkillActivated;
     handlers[GAME_SMSG_SKILL_ACTIVATE]                  = HandleSkillActivate;
     handlers[GAME_SMSG_SKILL_RECHARGE]                  = HandleSkillRecharge;
@@ -686,7 +686,7 @@ void GameSrv_RegisterCallbacks(Connection *conn)
     handlers[GAME_SMSG_EFFECT_REMOVED]                  = HandleEffectRemoved;
 
     // parties
-    handlers[GAME_SMSG_UPDATE_AGENT_PARTYSIZE]          = HandleAgentPartySize;
+    handlers[GAME_SMSG_PLAYER_UPDATE_PARTY_SIZE]        = HandleAgentPartySize;
     handlers[GAME_SMSG_PARTY_SET_DIFFICULTY]            = HandlePartySetDifficulty;
     handlers[GAME_SMSG_PARTY_HERO_ADD]                  = HandlePartyHeroAdd;
     handlers[GAME_SMSG_PARTY_HERO_REMOVE]               = HandlePartyHeroRemove;
@@ -721,7 +721,7 @@ void HandleCantEnterOutpost(Connection *conn, size_t psize, Packet *packet)
     } Payload;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_INSTANCE_CANT_ENTER);
+    assert(packet->header == GAME_SMSG_INSTANCE_TRAVEL_FAILURE);
     assert(sizeof(Payload) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;

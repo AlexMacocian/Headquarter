@@ -143,7 +143,7 @@ void HandleAgentMovementTick(Connection *conn, size_t psize, Packet *packet)
     } MovementTick;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_AGENT_MOVEMENT_TICK);
+    assert(packet->header == GAME_SMSG_WORLD_SIMULATION_TICK);
     assert(sizeof(MovementTick) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
@@ -167,7 +167,7 @@ void HandleAgentInstanceTimer(Connection *conn, size_t psize, Packet *packet)
     } InstanceTimer;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_AGENT_INSTANCE_TIMER);
+    assert(packet->header == GAME_SMSG_WORLD_UPDATE_LOAD_TIME);
     assert(sizeof(InstanceTimer) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
@@ -213,7 +213,7 @@ void HandleAgentSpawned(Connection *conn, size_t psize, Packet *packet)
     } AgentSpawned;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_AGENT_SPAWNED);
+    assert(packet->header == GAME_SMSG_WORLD_CREATE_AGENT);
     assert(sizeof(AgentSpawned) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
@@ -275,7 +275,7 @@ void HandleAgentDespawned(Connection *conn, size_t psize, Packet *packet)
     } AgentDespawned;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_AGENT_DESPAWNED);
+    assert(packet->header == GAME_SMSG_WORLD_REMOVE_AGENT);
     assert(sizeof(AgentDespawned) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
@@ -338,7 +338,7 @@ void HandleAgentSetPlayer(Connection *conn, size_t psize, Packet *packet)
     } SetPlayer;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_AGENT_SET_PLAYER);
+    assert(packet->header == GAME_SMSG_WORLD_UPDATE_CONTROLLED_AGENT);
     assert(sizeof(SetPlayer) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
@@ -621,7 +621,7 @@ void HandleUpdatePlayerInfo(Connection *conn, size_t psize, Packet *packet)
     } PlayerInfo;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_UPDATE_PLAYER_INFO);
+    assert(packet->header == GAME_SMSG_PLAYER_UPDATE_AGENT_INFO);
     assert(sizeof(PlayerInfo) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
@@ -699,7 +699,7 @@ void HandleAgentAttrUpdateInt(Connection *conn, size_t psize, Packet *packet)
     } AttrValue;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_AGENT_ATTR_UPDATE_INT);
+    assert(packet->header == GAME_SMSG_AGENT_PROPERTY_UPDATE_INT);
     assert(sizeof(AttrValue) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
@@ -761,7 +761,7 @@ void HandleAgentAttrUpdateIntTarget(Connection *conn, size_t psize, Packet *pack
     } AttrValue;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_AGENT_ATTR_UPDATE_INT_TARGET);
+    assert(packet->header == GAME_SMSG_AGENT_PROPERTY_UPDATE_INT_TARGET);
     assert(sizeof(AttrValue) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
@@ -786,7 +786,7 @@ void HandleAgentAttrUpdateFloat(Connection *conn, size_t psize, Packet *packet)
     } AttrValue;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_AGENT_ATTR_UPDATE_FLOAT);
+    assert(packet->header == GAME_SMSG_AGENT_PROPERTY_UPDATE_FLOAT);
     assert(sizeof(AttrValue) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
@@ -832,7 +832,7 @@ void HandleAgentAttrUpdateFloatTarget(Connection *conn, size_t psize, Packet *pa
     } AttrValue;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_AGENT_ATTR_UPDATE_FLOAT_TARGET);
+    assert(packet->header == GAME_SMSG_AGENT_PROPERTY_UPDATE_FLOAT_TARGET);
     assert(sizeof(AttrValue) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
@@ -959,7 +959,7 @@ void HandlePlayerUnlockedProfession(Connection *conn, size_t psize, Packet *pack
     } UnlockedProf;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_PLAYER_UNLOCKED_PROFESSION);
+    assert(packet->header == GAME_SMSG_PLAYER_UPDATE_UNLOCKED_PROFESSIONS);
     assert(sizeof(UnlockedProf) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;

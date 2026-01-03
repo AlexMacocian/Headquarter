@@ -58,7 +58,7 @@ void HandleAgentPartySize(Connection* conn, size_t psize, Packet* packet) {
         uint8_t size;
     } AgentPartySize;
 #pragma pack(pop)
-    assert(packet->header == GAME_SMSG_UPDATE_AGENT_PARTYSIZE);
+    assert(packet->header == GAME_SMSG_PLAYER_UPDATE_PARTY_SIZE);
     assert(psize == sizeof(AgentPartySize));
 
     GwClient* client = cast(GwClient*)conn->data;
