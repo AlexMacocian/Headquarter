@@ -102,7 +102,7 @@ int data_init(const char *dir)
             return 1;
         }
 
-        if ((file = fopen(dir, "r")) == NULL) {
+        if ((file = fopen(buffer, "r")) == NULL) {
             log_error("Couldn't open file '%s'", buffer);
             return 1;
         }
