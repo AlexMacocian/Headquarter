@@ -157,6 +157,13 @@ void parse_command_args(int argc, char **argv)
         log_error("You need to specify the script");
         print_help(true);
     }
+    FILE* check_script_file = fopen(options.script,"rb");
+    if (check_script_file == NULL)
+    {
+        log_error("Failed to open script file %s", options.script);
+        print_help(true);
+    }
+    fclose(check_script_file);
 
     if (options.log_dir[0]) {
         if (options.log_file[0]) {
@@ -199,8 +206,18 @@ void parse_command_args(int argc, char **argv)
     } else {
         FILE *file;
         if ((file = fopen(options.file_game_version, "rb")) == NULL) {
-            log_error("Failed to open '%s', err: %d", options.file_game_version, errno);
-            abort();
+            int check_is_numeric = atoi(options.file_game_version);
+            if (check_is_numeric)
+            {
+                options.game_version = check_is_numeric;
+                return;
+            }
+            else
+            {
+                log_error("Failed to open '%s', err: %d", options.file_game_version, errno);
+                abort();
+            }
+            
         }
 
         char buffer[16];

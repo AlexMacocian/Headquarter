@@ -9,6 +9,18 @@ project(
 option(ENABLE_TESTING "Build tests" OFF)
 option(HQ_ENABLE_TESTING "Build tests" OFF)
 
+# Look for dependencies in the deps directory (if not already in CMAKE_PREFIX_PATH)
+if(WIN32)
+    set(HQ_DEPS_INSTALL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps/Windows")
+else()
+    set(HQ_DEPS_INSTALL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps/Linux")
+endif()
+
+if(EXISTS "${HQ_DEPS_INSTALL_DIR}")
+    list(APPEND CMAKE_PREFIX_PATH "${HQ_DEPS_INSTALL_DIR}")
+    message(STATUS "Headquarter: Using dependencies from ${HQ_DEPS_INSTALL_DIR}")
+endif()
+
 find_package(MbedTLS REQUIRED)
 find_package(CURL REQUIRED)
 

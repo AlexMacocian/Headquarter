@@ -36,11 +36,13 @@ def main(args):
     if _SYSTEM_NAME == 'Windows':
         cmake_c_compiler = None
         cmake_build_type = None
-        generator = 'Visual Studio 14 2015'
+        generator = 'Visual Studio 17 2022'
+        cmake_platform_args = ['-A', 'x64']
     elif _SYSTEM_NAME == 'Linux':
         cmake_c_compiler = f'-DCMAKE_C_COMPILER={_DEFAULT_C_COMPILER}'
         cmake_build_type = f'-DCMAKE_BUILD_TYPE={_DEFAULT_BUILD_TYPE}'
         generator = 'Ninja'
+        cmake_platform_args = []
     else:
         print(f"Unsupported platform '{_SYSTEM_NAME}'")
         sys.exit(1)
@@ -62,9 +64,11 @@ def main(args):
     curl_build_dir = os.path.join(deps_build_dir, 'curl')
     mbedtls_build_dir = os.path.join(deps_build_dir, 'mbedtls')
 
-    run([
+    # Build MbedTLS
+    mbedtls_cmake_args = [
         'cmake',
         '-G', generator,
+    ] + cmake_platform_args + [
         '-S', mbedtls_dir,
         '-B', mbedtls_build_dir,
         cmake_build_type,
@@ -72,11 +76,14 @@ def main(args):
         f'-DCMAKE_INSTALL_PREFIX={deps_install_dir}',
         '-DENABLE_PROGRAMS=Off',
         '-DENABLE_TESTING=Off',
-    ])
+    ]
+    run(mbedtls_cmake_args)
 
-    cmake_args = [
+    # Build CURL
+    curl_cmake_args = [
         'cmake',
         '-G', generator,
+    ] + cmake_platform_args + [
         '-S', curl_dir,
         '-B', curl_build_dir,
         cmake_build_type,
@@ -89,32 +96,37 @@ def main(args):
     ]
 
     if _SYSTEM_NAME == 'Linux':
-        cmake_args.append('-DCURL_USE_OPENSSL=On')
+        curl_cmake_args.append('-DCURL_USE_OPENSSL=On')
     elif _SYSTEM_NAME == 'Windows':
-        cmake_args.append('-DCURL_USE_SCHANNEL=On')
+        curl_cmake_args.append('-DCURL_USE_SCHANNEL=On')
 
-    run(cmake_args)
+    run(curl_cmake_args)
 
     run([
         'cmake',
         '--build', mbedtls_build_dir,
-        '--target', 'install'
+        '--target', 'install',
+        '--config', 'Release'
     ])
 
     run([
         'cmake',
         '--build', curl_build_dir,
-        '--target', 'install'
+        '--target', 'install',
+        '--config', 'Release'
     ])
 
-    run([
+    # Build Headquarter itself
+    hq_cmake_args = [
         'cmake',
         '-G', generator,
+    ] + cmake_platform_args + [
         '-B', build_dir,
         cmake_build_type,
         cmake_c_compiler,
         f'-DCMAKE_PREFIX_PATH={deps_install_dir}',
-    ])
+    ]
+    run(hq_cmake_args)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
