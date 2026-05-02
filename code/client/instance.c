@@ -88,6 +88,7 @@ void HandleGameTransferInfo(Connection *conn, size_t psize, Packet *packet)
         uint16_t map_id;
         uint8_t  is_explorable;
         uint32_t player_id;
+        uint8_t unk;
     } ServerInfo;
 #pragma pack(pop)
 
