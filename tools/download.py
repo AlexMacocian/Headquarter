@@ -40,13 +40,15 @@ class FileRequest(object):
     def download_chunk(self):
         head, size = self.cli.recv('<HH')
         if head != 0x6F2 and head != 0x6F3:
-            raise RuntimeError('header {head:X} is not 0x6F2 or 0x6F3?')
+            raise RuntimeError(f'header {head:X} is not 0x6F2 or 0x6F3?')
 
         size -= 4
         self.last_chunk = size
 
         while size > 0:
             data = self.cli.s.recv(size)
+            if not data:
+                raise RuntimeError('Connection closed during chunk download')
             size -= len(data)
             self.buffer += data
             self.size_complete += len(data)
@@ -70,10 +72,12 @@ class FileRequest(object):
     def download(self):
         while True:
             self.download_chunk()
+            # Always yield the chunk size (including the final chunk) so
+            # callers (e.g. tqdm) can account for every byte received.
+            yield self.last_chunk
             if self.complete:
                 self.finalize_download()
                 break
-            yield self.percent
             self.request_more()
 
 
@@ -102,21 +106,29 @@ class FileClient(object):
     def send(self, format, *data):
         payload = struct.pack(format, *data)
         self.s.send(payload)
-    
+
     def recv(self, format):
         sz = struct.calcsize(format)
-        buffer = self.s.recv(sz)
+        buffer = b''
+        while len(buffer) < sz:
+            chunk = self.s.recv(sz - len(buffer))
+            if not chunk:
+                raise RuntimeError('Connection closed during recv')
+            buffer += chunk
         data = struct.unpack(format, buffer)
         return data if len(data) > 1 else data[0]
 
     def recv_wait(self, format):
         sz = struct.calcsize(format)
-        buffer = None
-        while True:
+        buffer = b''
+        while len(buffer) < sz:
             try:
-                buffer = self.s.recv(sz)
-                break
-            except BlockingIOError: time.sleep(.1)
+                chunk = self.s.recv(sz - len(buffer))
+                if not chunk:
+                    raise RuntimeError('Connection closed during recv_wait')
+                buffer += chunk
+            except BlockingIOError:
+                time.sleep(.1)
         data = struct.unpack(format, buffer)
         return data if len(data) > 1 else data[0]
 
@@ -329,8 +341,8 @@ if __name__ == '__main__':
 
     fr = client.request_file(file_id)
     with tqdm(total=fr.size_compressed, unit='B') as progress:
-        for percent in fr.download():
-            progress.update(fr.last_chunk)
+        for chunk_size in fr.download():
+            progress.update(chunk_size)
 
     output_path = f'{fr.fileid}.download'
     print(f"Writing '{output_path}'...")

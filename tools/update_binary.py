@@ -33,7 +33,6 @@ def main(args):
     client.connect()
 
     if (file_id == 0) or (client.file_id_latest_exe != file_id):
-        # The scanner holds reference to `exe_path` preventing it from being overwritten.
         if scanner:
             del scanner
 
@@ -41,8 +40,21 @@ def main(args):
         with tqdm(total=fr.size_compressed, unit='B') as progress:
             for percent in fr.download():
                 progress.update(fr.last_chunk)
+
+        data = fr.decompressed()
+        
+        # Diagnose bad decompressed output
+        if data is None:
+            raise RuntimeError("fr.decompressed() returned None — decompression failed")
+        if not isinstance(data, (bytes, bytearray)):
+            raise RuntimeError(f"fr.decompressed() returned unexpected type: {type(data)}")
+        if len(data) == 0:
+            raise RuntimeError("fr.decompressed() returned empty bytes")
+            
+        print(repr(exe_path))
         with open(exe_path, 'wb') as fd:
-            fd.write(fr.decompressed())
+            fd.write(data)
+        
         scanner = FileScanner(exe_path)
 
     build = dump_key.get_build_number(scanner)

@@ -80,6 +80,8 @@ def main(args):
         proc = process.Process.from_name(args.proc)
         scanner = process.ProcessScanner(proc)
 
+    build = get_build_number(scanner)
+
     if args.output:
         if args.output == '-':
             output = None
