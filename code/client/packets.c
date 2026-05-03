@@ -341,6 +341,23 @@ MsgField AUTH_CLIENT_0056[6] = {
     {TYPE_STRING_16, 32},
 };
 
+MsgField AUTH_CLIENT_0057[1] = {
+    {TYPE_MSG_HEADER, 57},
+};
+
+MsgField AUTH_CLIENT_0058[4] = {
+    {TYPE_MSG_HEADER, 58},
+    {TYPE_DWORD, 0},
+    {TYPE_DWORD, 0},
+    {TYPE_ARRAY_8, 512},
+};
+
+MsgField AUTH_CLIENT_0059[3] = {
+    {TYPE_MSG_HEADER, 59},
+    {TYPE_DWORD, 0},
+    {TYPE_ARRAY_8, 512},
+};
+
 MsgField AUTH_SERVER_0000[2] = {
     {TYPE_MSG_HEADER, 0},
     {TYPE_DWORD, 0},
@@ -609,6 +626,12 @@ MsgField AUTH_SERVER_0038[3] = {
     {TYPE_MSG_HEADER, 38},
     {TYPE_DWORD, 0},
     {TYPE_DWORD, 0},
+};
+
+MsgField AUTH_SERVER_0039[3] = {
+    {TYPE_MSG_HEADER, 39},
+    {TYPE_DWORD, 0},
+    {TYPE_ARRAY_8, 4096},
 };
 
 MsgField GAME_CLIENT_0000[2] = {
@@ -4627,7 +4650,7 @@ MsgField GAME_SERVER_0420[14] = {
     {TYPE_BLOB, 8},
 };
 
-MsgField GAME_SERVER_0421[7] = {
+MsgField GAME_SERVER_0421[8] = {
     {TYPE_MSG_HEADER, 421},
     {TYPE_BLOB, 24},
     {TYPE_DWORD, 0},
@@ -4635,6 +4658,7 @@ MsgField GAME_SERVER_0421[7] = {
     {TYPE_WORD, 0},
     {TYPE_BYTE, 0},
     {TYPE_DWORD, 0},
+    {TYPE_BYTE, 0},
 };
 
 MsgField GAME_SERVER_0422[10] = {
@@ -5044,7 +5068,7 @@ MsgField GAME_SERVER_0486[2] = {
     {TYPE_BYTE, 0},
 };
 
-MsgFormat AUTH_CLIENT_FORMATS[57] = {
+MsgFormat AUTH_CLIENT_FORMATS[60] = {
 // header | field_count | fields | max_size
     {0,   2,  AUTH_CLIENT_0000, 6},
     {1,   3,  AUTH_CLIENT_0001, 130},
@@ -5103,9 +5127,12 @@ MsgFormat AUTH_CLIENT_FORMATS[57] = {
     {54,  1,  AUTH_CLIENT_0054, 2},
     {55,  4,  AUTH_CLIENT_0055, 86},
     {56,  6,  AUTH_CLIENT_0056, 142},
+    {57,  1,  AUTH_CLIENT_0057, 2},
+    {58,  4,  AUTH_CLIENT_0058, 526},
+    {59,  3,  AUTH_CLIENT_0059, 522},
 };
 
-MsgFormat AUTH_SERVER_FORMATS[39] = {
+MsgFormat AUTH_SERVER_FORMATS[40] = {
 // header | field_count | fields | max_size
     {0,   2,  AUTH_SERVER_0000, 6},
     {1,   3,  AUTH_SERVER_0001, 10},
@@ -5146,6 +5173,7 @@ MsgFormat AUTH_SERVER_FORMATS[39] = {
     {36,  1,  AUTH_SERVER_0036, 2},
     {37,  1,  AUTH_SERVER_0037, 2},
     {38,  3,  AUTH_SERVER_0038, 10},
+    {39,  3,  AUTH_SERVER_0039, 4106},
 };
 
 MsgFormat GAME_CLIENT_FORMATS[194] = {
@@ -5769,7 +5797,7 @@ MsgFormat GAME_SERVER_FORMATS[487] = {
     {418, 7,  GAME_SERVER_0418, 20},
     {419, 4,  GAME_SERVER_0419, 491},
     {420, 14, GAME_SERVER_0420, 79},
-    {421, 7,  GAME_SERVER_0421, 38},
+    {421, 8,  GAME_SERVER_0421, 39},
     {422, 10, GAME_SERVER_0422, 506},
     {423, 2,  GAME_SERVER_0423, 3},
     {424, 3,  GAME_SERVER_0424, 7},
