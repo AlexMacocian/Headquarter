@@ -81,14 +81,14 @@ void HandleGameTransferInfo(Connection *conn, size_t psize, Packet *packet)
 {
 #pragma pack(push, 1)
     typedef struct {
-        Header header;
-        uint8_t host[24];
+        Header   header;
+        uint8_t  host[24];
         uint32_t world_id;
-        int8_t  region;
+        uint8_t  region;
         uint16_t map_id;
         uint8_t  is_explorable;
         uint32_t player_id;
-        uint8_t unk;
+        uint8_t  h00F;
     } ServerInfo;
 #pragma pack(pop)
 
