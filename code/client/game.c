@@ -216,6 +216,7 @@ void HandleInstanceLoadSpawnPoint(Connection *conn, size_t psize, Packet *packet
     typedef struct {
         Header header;
         uint32_t data[4];
+        uint8_t unknown;
     } RequestPlayers;
 #pragma pack(pop)
 
