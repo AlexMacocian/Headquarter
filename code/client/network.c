@@ -366,6 +366,15 @@ bool socket_would_block(int err)
 #endif
 }
 
+bool socket_conn_reset(int err)
+{
+#ifdef _WIN32
+    return err == WSAECONNRESET;
+#else
+    return err == ECONNRESET;
+#endif
+}
+
 bool socket_set_nonblock(struct socket *sock)
 {
 #if _WIN32
@@ -424,9 +433,16 @@ bool key_exchange_helper(Connection *conn, DiffieHellmanCtx *dhm)
         goto quick_exist;
     }
 
-    // @Remark, We can fail here if 'GUILD_WARS_VERSION' isn't updated.
     result = recv(conn->fd.handle, cast(char *)&server_seed, sizeof(server_seed), 0);
-    if (result != sizeof(server_seed)) {
+    if (result <= 0) {
+        int err = os_errno;
+        LogError("Failed to receive MSG_SERVER_SEED. err: %d", err);
+        if (socket_conn_reset(err)) {
+            LogWarn("You're likely need to update the client to the latest version of the server");
+        }
+        success = false;
+        goto quick_exist;
+    } else if (result != sizeof(server_seed)) {
         LogError(
             "MSG_SERVER_SEED size missmatch. Expected %u bytes, but received %u bytes. (%d)",
             sizeof(MSG_SERVER_SEED),

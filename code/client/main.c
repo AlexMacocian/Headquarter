@@ -205,7 +205,7 @@ int main(int argc, char **argv)
             }
 
             struct webgate_login_result result;
-            if (webgate_login(&result, options.email, options.password, secret, GUILD_WARS_VERSION) != 0) {
+            if (webgate_login(&result, options.email, options.password, secret, options.game_version) != 0) {
                 log_error("Failed to connect to webgate");
                 return 1;
             }
