@@ -7,10 +7,53 @@ bool quit;
 uint32_t fps;
 GwClient *client;
 
+// Lifecycle status written to HEADQUARTER_HEALTH_FILE (empty/unset disables it)
+// so an external healthcheck can see what the bot is doing and, via the
+// appended timestamp, whether it is still alive.
+static const char *health_file;
+static char health_status[32];
+static msec_t health_last_ms;
+
 void sighandler(int signum)
 {
     (void)signum;
     quit = true;
+}
+
+static void set_health_status(const char *status)
+{
+    if (health_file == NULL || health_file[0] == 0)
+        return;
+
+    msec_t now = time_get_ms();
+    bool changed = strcmp(health_status, status) != 0;
+    if (!changed && health_last_ms != 0 && (now - health_last_ms) < 5000)
+        return;
+
+    safe_strcpy(health_status, sizeof(health_status), status);
+    health_last_ms = now;
+
+    FILE *f = fopen(health_file, "w");
+    if (f == NULL)
+        return;
+    fprintf(f, "%s %" PRIu64 "\n", status, get_time_since_epoch());
+    fclose(f);
+}
+
+// Wait HEADQUARTER_LOGIN_BACKOFF seconds after a login failure so a restarting
+// supervisor doesn't hammer the login endpoint while rate-limited.
+static void login_backoff(void)
+{
+    const char *env = getenv("HEADQUARTER_LOGIN_BACKOFF");
+    if (env == NULL || env[0] == 0)
+        return;
+
+    int secs = atoi(env);
+    if (secs <= 0)
+        return;
+
+    LogInfo("Backing off %d seconds after login failure", secs);
+    time_sleep_sec((unsigned int)secs);
 }
 
 void main_loop(void)
@@ -89,6 +132,8 @@ void main_loop(void)
         //
         process_timers();
 
+        set_health_status((client->ingame && !client->loading) ? "running" : "connecting");
+
         {
             long frame_target_nsec = 1000000000 / fps;
 
@@ -124,6 +169,9 @@ int main(int argc, char **argv)
 
     unsigned int seed = (unsigned int)time(NULL);
     srand(seed);
+
+    health_file = getenv("HEADQUARTER_HEALTH_FILE");
+    set_health_status("starting");
 
     signal(SIGINT, sighandler);
     time_init();
@@ -188,11 +236,13 @@ int main(int argc, char **argv)
             secret = options.secret_2fa;
         }
 
+        set_health_status("logging_in");
         if (options.use_portal) {
             struct portal_login_result result;
             int ret = portal_login(&result, options.email, options.password, secret);
             if (ret != 0) {
                 log_error("Failed to connect to portal");
+                login_backoff();
                 return 1;
             }
 
@@ -207,6 +257,7 @@ int main(int argc, char **argv)
             struct webgate_login_result result;
             if (webgate_login(&result, options.email, options.password, secret, options.game_version) != 0) {
                 log_error("Failed to connect to webgate");
+                login_backoff();
                 return 1;
             }
 
@@ -215,6 +266,7 @@ int main(int argc, char **argv)
             client->portal_token = result.token;
             client->portal_user_id = result.user_id;
         }
+        set_health_status("logged_in");
 
     #if defined(HEADQUARTER_CONSOLE)
         SetConsoleTitleA(options.charname);
@@ -228,6 +280,8 @@ int main(int argc, char **argv)
     LogInfo("Plugin loaded, %s", options.script);
 
     main_loop();
+
+    set_health_status("closing");
 
     while (!list_empty(&plugins)) {
         Plugin *it = plugin_first();
