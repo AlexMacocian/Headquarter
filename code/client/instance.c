@@ -84,7 +84,7 @@ void HandleGameTransferInfo(Connection *conn, size_t psize, Packet *packet)
         Header   header;
         uint8_t  host[24];
         uint32_t world_id;
-        uint8_t  region;
+        int8_t   region; // signed because international is -2
         uint16_t map_id;
         uint8_t  is_explorable;
         uint32_t player_id;
