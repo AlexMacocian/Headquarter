@@ -238,6 +238,7 @@ void HandleInstanceLoadInfo(Connection *conn, size_t psize, Packet *packet)
         int32_t district;
         int8_t language;
         int8_t is_observer;
+        int8_t unk0;
     } InstanceInfo;
 #pragma pack(pop)
 
