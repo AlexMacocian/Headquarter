@@ -583,7 +583,7 @@ void HandleAgentDestroyPlayer(Connection* conn, size_t psize, Packet* packet)
     } PlayerInfo;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_AGENT_DESTROY_PLAYER);
+    assert(packet->header == GAME_SMSG_PLAYER_DESTROY);
     assert(sizeof(PlayerInfo) == psize);
 
     GwClient* client = cast(GwClient*)conn->data;
@@ -621,7 +621,7 @@ void HandleUpdatePlayerInfo(Connection *conn, size_t psize, Packet *packet)
     } PlayerInfo;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_PLAYER_UPDATE_AGENT_INFO);
+    assert(packet->header == GAME_SMSG_PLAYER_CREATE);
     assert(sizeof(PlayerInfo) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;

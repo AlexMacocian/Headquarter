@@ -17,6 +17,7 @@
 #define AUTH_CMSG_ACCOUNT_CREATE                        (AUTH_CMSG_MASK | 0x0003) // 3
 #define AUTH_CMSG_ACCOUNT_LOGIN                         (AUTH_CMSG_MASK | 0x0004) // 4
 #define AUTH_CMSG_DELETE_CHARACTER                      (AUTH_CMSG_MASK | 0x0007) // 7
+#define AUTH_CMSG_UPDATE_CHARACTER_SETTINGS             (AUTH_CMSG_MASK | 0x0009) // 9
 #define AUTH_CMSG_CHANGE_PLAY_CHARACTER                 (AUTH_CMSG_MASK | 0x000A) // 10
 #define AUTH_CMSG_DISCONNECT                            (AUTH_CMSG_MASK | 0x000D) // 13
 #define AUTH_CMSG_SET_PLAYER_STATUS                     (AUTH_CMSG_MASK | 0x000E) // 14
@@ -201,8 +202,8 @@
 #define GAME_SMSG_QUEST_UPDATE_NAME                     (GAME_SMSG_MASK | 0x0054) // 84
 #define GAME_SMSG_NPC_UPDATE_PROPERTIES                 (GAME_SMSG_MASK | 0x0056) // 86
 #define GAME_SMSG_NPC_UPDATE_MODEL                      (GAME_SMSG_MASK | 0x0057) // 87
-#define GAME_SMSG_PLAYER_UPDATE_AGENT_INFO              (GAME_SMSG_MASK | 0x0059) // 89
-#define GAME_SMSG_AGENT_DESTROY_PLAYER                  (GAME_SMSG_MASK | 0x005A) // 90
+#define GAME_SMSG_PLAYER_CREATE                         (GAME_SMSG_MASK | 0x0059) // 89
+#define GAME_SMSG_PLAYER_DESTROY                        (GAME_SMSG_MASK | 0x005A) // 90
 #define GAME_SMSG_CHAT_MESSAGE_CORE                     (GAME_SMSG_MASK | 0x005D) // 93
 #define GAME_SMSG_CHAT_MESSAGE_SERVER                   (GAME_SMSG_MASK | 0x005E) // 94
 #define GAME_SMSG_CHAT_MESSAGE_NPC                      (GAME_SMSG_MASK | 0x005F) // 95
@@ -327,7 +328,7 @@
 #define GAME_SMSG_ITEM_SET_PROFESSION                   (GAME_SMSG_MASK | 0x015A) // 346
 #define GAME_SMSG_CREATE_UNNAMED_ITEM                   (GAME_SMSG_MASK | 0x015F) // 351
 #define GAME_SMSG_CREATE_NAMED_ITEM                     (GAME_SMSG_MASK | 0x0161) // 353
-#define GAME_SMSG_ITEM_REUSE_ID                         (GAME_SMSG_MASK | 0x0162) // 354
+#define GAME_SMSG_ITEM_UPDATE                           (GAME_SMSG_MASK | 0x0162) // 354
 #define GAME_SMSG_ITEM_SALVAGE_SESSION_START            (GAME_SMSG_MASK | 0x0163) // 355
 #define GAME_SMSG_ITEM_SALVAGE_SESSION_CANCEL           (GAME_SMSG_MASK | 0x0164) // 356
 #define GAME_SMSG_ITEM_SALVAGE_SESSION_DONE             (GAME_SMSG_MASK | 0x0165) // 357
