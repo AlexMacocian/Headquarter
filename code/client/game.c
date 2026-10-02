@@ -238,6 +238,7 @@ void HandleInstanceLoadInfo(Connection *conn, size_t psize, Packet *packet)
         int32_t district;
         int8_t language;
         int8_t is_observer;
+        int8_t unk0;
     } InstanceInfo;
 #pragma pack(pop)
 
@@ -581,8 +582,8 @@ void GameSrv_RegisterCallbacks(Connection *conn)
     handlers[GAME_SMSG_AGENT_UPDATE_POSITION]           = HandleAgentUpdatePosition;
     handlers[GAME_SMSG_AGENT_UPDATE_ROTATION]           = HandleAgentUpdateRotation;
     handlers[GAME_SMSG_AGENT_UPDATE_DESTINATION]        = HandleAgentUpdateDestination;
-    handlers[GAME_SMSG_PLAYER_UPDATE_AGENT_INFO]        = HandleUpdatePlayerInfo;
-    handlers[GAME_SMSG_AGENT_DESTROY_PLAYER]            = HandleAgentDestroyPlayer;
+    handlers[GAME_SMSG_PLAYER_CREATE]                   = HandleUpdatePlayerInfo;
+    handlers[GAME_SMSG_PLAYER_DESTROY]                  = HandleAgentDestroyPlayer;
     
     handlers[GAME_SMSG_AGENT_CREATE_NPC]                = HandleAgentCreateNPC;
     handlers[GAME_SMSG_AGENT_PINGED]                    = HandleAgentPingeg;
